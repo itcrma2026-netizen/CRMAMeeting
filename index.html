@@ -293,7 +293,7 @@
             
             // จำกัดการโชว์ข้อความให้กระชับสวยงาม (line-clamp-1) แสดงผลเท่ากันทั้งคอมและมือถือ
             const bookingsHtml = dayBookings.map(b => `
-                <div class="text-[10px] bg-emerald-600 text-white rounded p-1 mt-0.5 text-left shadow-sm leading-tight" 
+                <div class="text-[9px] bg-emerald-600 text-white rounded p-1 mt-0.5 text-left shadow-sm leading-tight" 
                      title="${b.start_time}-${b.end_time} | ${b.room_name} | ผู้จอง: ${b.booker_name} | วัตถุประสงค์: ${b.purpose}">
                     <div class="font-bold whitespace-nowrap text-emerald-200">⏱️ ${b.start_time}</div>
                     <div class="font-medium line-clamp-1 break-all">${b.purpose}</div>
@@ -332,7 +332,8 @@
         const bookings = allBookings.filter(b => b.date === ds && b.status === 'active');
         if (bookings.length === 0) { panel.classList.add('hidden'); return; }
         panel.classList.remove('hidden');
-        list.innerHTML = bookings.map(b => `<div class="bg-white rounded px-2 py-1 shadow-sm border border-gray-100">🕐 ${b.start_time}-${b.end_time} | <strong>${b.room_name}</strong> | เรื่อง: ${b.purpose} (โดย: ${b.booker_name})</div>`).join('');
+        list.innerHTML = bookings.map(b => `<div class="bg-white rounded px-2 py-1 shadow-sm border border-gray-100">🕐 ${b.start_time}-${b.end_time} | </strong> | เรื่อง: ${b.purpose} (โดย: ${b.booker_name} <strong>${b.room_name}
+)</div>`).join('');
     }
 
     function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
