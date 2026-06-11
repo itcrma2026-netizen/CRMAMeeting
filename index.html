@@ -1,19 +1,17 @@
 <!doctype html>
 <html lang="th">
 <head>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<header class="bg-white p-4 shadow-md flex flex-col items-center">
- <img src="01.png" width="80" height="80">
-  <h1 class="text-2xl font-bold text-[#166534] text-center mb-1">โรงพยาบาลโรงเรียนนายร้อยพระจุลจอมเกล้า</h1>
-  <p class="text-lg text-[#b08b3e] font-semibold text-center mb-4">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
-</header>
-<title>Smart Meeting Room Booking - รพ.รร.จปร.</title>
+  <title>Smart Meeting Room Booking - รพ.รร.จปร.</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'DM Sans', sans-serif; }
     .tab-active { background: #facc15; color: #1a1a1a; font-weight: 600; }
@@ -24,6 +22,13 @@
   </style>
 </head>
 <body class="w-full min-h-screen" style="background: linear-gradient(rgb(240, 253, 244), rgb(255, 255, 255));">
+  
+  <header class="bg-white p-4 shadow-md flex flex-col items-center">
+    <img src="imges/01.png" width="80" height="80" alt="Logo">
+    <h1 class="text-2xl font-bold text-[#166534] text-center mb-1">โรงพยาบาลโรงเรียนนายร้อยพระจุลจอมเกล้า</h1>
+    <p class="text-lg text-[#b08b3e] font-semibold text-center mb-4">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
+  </header>
+
   <header class="p-4 shadow-md" style="background: linear-gradient(135deg, rgb(22, 101, 52), rgb(21, 128, 61));">
    <div class="max-w-4xl mx-auto">
     <h1 class="text-center font-bold" style="color: rgb(255, 255, 255); font-size: 22px;">ระบบจองห้องประชุม รพ.รร.จปร.</h1>
@@ -33,7 +38,7 @@
      <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ</button>
     </nav>
    </div>
-</header>
+  </header>
 
   <main class="max-w-4xl mx-auto p-4">
    
@@ -81,17 +86,38 @@
       <button onclick="clearFilters()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1.5 rounded-lg border transition">ล้างตัวกรอง</button>
      </div>
      <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg mb-3 shadow transition">
-       📊 ดาวน์โหลดรายงานลง Excel (.csv)
+        📊 ดาวน์โหลดรายงานลง Excel (.csv)
      </button>
      <div id="mybookings-list" class="space-y-2"></div>
      <p id="mybookings-empty" class="text-gray-400 text-center py-6 hidden">ยังไม่มีรายการจองในระบบ</p>
     </div>
    </section>
 
-   <section id="page-stats" class="hidden">
-    <div class="bg-white rounded-xl p-4 shadow">
-     <h2 class="font-bold mb-4" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
-     <div id="stats-content" class="space-y-4"></div>
+  <section id="page-stats" class="hidden">
+ <div class="bg-white rounded-xl p-4 shadow">
+   <h2 class="font-bold mb-1" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
+   
+   <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg mb-4 mt-2 shadow-sm transition flex items-center gap-1.5">
+     📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
+   </button>
+      
+      <div id="stats-cards"></div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+          <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (เดือนนี้)</h4>
+          <div class="max-w-[240px] mx-auto w-full">
+            <canvas id="roomChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <h4 id="yearly-table-title" class="font-semibold text-sm mb-3 text-neutral-700 text-center">🗓️ ภาพรวมรายปี พ.ศ.</h4>
+          <div id="yearly-table-content" class="overflow-x-auto"></div>
+        </div>
+      </div>
+
+      <div id="stats-content" class="mt-6"></div>
     </div>
    </section>
   </main>
@@ -131,7 +157,8 @@
     </form>
    </div>
   </div>
-<script>
+
+  <script>
     const ROOMS = [
         'ห้องประชุม VIP ชั้น 1',
         'ห้องประชุม 1 ชั้น 2',
@@ -264,21 +291,23 @@
             
             const dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
             
+            // จำกัดการโชว์ข้อความให้กระชับสวยงาม (line-clamp-1) แสดงผลเท่ากันทั้งคอมและมือถือ
             const bookingsHtml = dayBookings.map(b => `
-                <div class="text-[10px] bg-emerald-600 text-white rounded px-1 py-0.5 mt-0.5 truncate text-left shadow-sm" 
-                     title="${b.start_time}-${b.end_time} | ${b.room_name} | ผู้จอง: ${b.booker_name}">
-                    🔹 ${b.start_time} ${b.purpose}
+                <div class="text-[10px] bg-emerald-600 text-white rounded p-1 mt-0.5 text-left shadow-sm leading-tight" 
+                     title="${b.start_time}-${b.end_time} | ${b.room_name} | ผู้จอง: ${b.booker_name} | วัตถุประสงค์: ${b.purpose}">
+                    <div class="font-bold whitespace-nowrap text-emerald-200">⏱️ ${b.start_time}</div>
+                    <div class="font-medium line-clamp-1 break-all">${b.purpose}</div>
                 </div>
             `).join('');
 
-            let dayNumClass = 'w-7 h-7 flex items-center justify-center text-sm mx-auto hover:bg-yellow-100 rounded-full font-medium';
+            let dayNumClass = 'w-6 h-6 flex items-center justify-center text-xs sm:text-sm mx-auto hover:bg-yellow-100 rounded-full font-medium';
             if (isSel) dayNumClass += ' cal-selected';
             else if (isToday) dayNumClass += ' cal-today';
 
             html += `
-                <div class="border border-gray-100 p-1 min-h-[85px] bg-white rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-sm transition" onclick="selectDate('${dateStr}')">
+                <div class="border border-gray-100 p-1 min-h-[90px] bg-white rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-sm transition" onclick="selectDate('${dateStr}')">
                     <span class="${dayNumClass}">${d}</span>
-                    <div class="w-full overflow-hidden mt-1 flex-grow">
+                    <div class="w-full mt-1 flex-grow flex flex-col gap-0.5 overflow-hidden">
                         ${bookingsHtml}
                     </div>
                 </div>
@@ -459,11 +488,14 @@
         }
     }
 
+    let roomChartInstance = null;
+
     function renderStats() {
         const active = allBookings.filter(b => b.status === 'active');
         const total = active.length;
         const roomCounts = {};
         const hourCounts = {};
+        
         active.forEach(b => {
             roomCounts[b.room_name] = (roomCounts[b.room_name]||0) + 1;
             const h = b.start_time?.split(':')[0];
@@ -471,12 +503,14 @@
         });
         const topRoom = Object.entries(roomCounts).sort((a,b)=>b[1]-a[1])[0];
         const topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
+
         
         const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
 
+        // คำนวณข้อมูลประจำเดือน
         const monthlyBookings = active.filter(b => {
             const [y, m] = b.date.split('-').map(Number);
             return y === currentYear && m === currentMonth + 1;
@@ -487,11 +521,11 @@
         });
         const monthYear = `${thMonths[currentMonth]} ${currentYear + 543}`;
         
+        // คำนวณข้อมูลรายปี
         const yearlyBookings = active.filter(b => {
             const [y] = b.date.split('-').map(Number);
             return y === currentYear;
         });
-
         const yearlyMonthCounts = Array(12).fill(0);
         yearlyBookings.forEach(b => {
             const [_, m] = b.date.split('-').map(Number);
@@ -500,37 +534,88 @@
             }
         });
 
-        document.getElementById('stats-content').innerHTML = `
+        // [1] เรนเดอร์การ์ดสรุปด้านบน
+        document.getElementById('stats-cards').innerHTML = `
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="bg-green-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-green-700">${total}</div><div class="text-sm text-gray-600">จำนวนการจองทั้งหมด</div></div>
-                <div class="bg-yellow-50 rounded-xl p-4 text-center"><div class="text-lg font-bold text-yellow-700">${topRoom?topRoom[0]:'—'}</div><div class="text-sm text-gray-600">ห้องที่ใช้บ่อยที่สุด</div></div>
-                <div class="bg-blue-50 rounded-xl p-4 text-center"><div class="text-lg font-bold text-blue-700">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-sm text-gray-600">ช่วงเวลายอดนิยม</div></div>
-            </div>
-            
-            <div class="mt-6"><h4 class="font-semibold text-base mb-3 text-yellow-700">📅 สรุปประจำเดือน: ${monthYear}</h4>
-            <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-                <div class="text-lg font-bold text-yellow-700 mb-3">จำนวนรายการจอง: ${monthlyBookings.length} รายการ</div>
-                ${ROOMS.map(r=>`<div class="flex justify-between text-sm py-2 border-b border-yellow-100"><span>${r}</span><span class="font-semibold text-yellow-700">${monthlyRoomCounts[r]||0} ครั้ง</span></div>`).join('')}
-            </div>
-            </div>
+                <div class="bg-green-50 rounded-xl p-4 text-center border border-green-100 shadow-sm"><div class="text-2xl font-bold text-green-700">${total}</div><div class="text-sm text-gray-600">จำนวนการจองทั้งหมด</div></div>
+                <div class="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-100 shadow-sm"><div class="text-lg font-bold text-yellow-700">${topRoom?topRoom[0]:'—'}</div><div class="text-sm text-gray-600">ห้องที่ใช้บ่อยที่สุด</div></div>
+                <div class="bg-blue-50 rounded-xl p-4 text-center border border-blue-100 shadow-sm"><div class="text-lg font-bold text-blue-700">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-sm text-gray-600">ช่วงเวลายอดนิยม</div></div>
+            </div>`;
 
-            <div class="mt-6">
-                <h4 class="font-semibold text-base mb-3 text-indigo-700">🗓️ ภาพรวมรายปี พ.ศ. ${currentYear + 543}</h4>
-                <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
-                    <div class="text-lg font-bold text-indigo-700 mb-3">รวมทั้งปี: ${yearlyBookings.length} รายการ</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                        ${thMonths.map((mName, idx) => {
-                            const count = yearlyMonthCounts[idx];
-                            return `
-                                <div class="bg-white p-2 rounded-lg border border-indigo-100 flex justify-between items-center text-xs">
-                                    <span class="text-gray-600 font-medium">${mName}</span>
-                                    <span class="font-bold text-indigo-600">${count} ครั้ง</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
+        // [2] เรนเดอร์ตารางภาพรวมรายปี
+        document.getElementById('yearly-table-title').textContent = `🗓️ ภาพรวมรายปี พ.ศ. ${currentYear + 543} (รวม ${yearlyBookings.length} ครั้ง)`;
+        
+        let yearlyCells = thMonths.map((mName, idx) => `
+            <tr class="border-b border-gray-100 text-xs">
+                <td class="py-1.5 font-medium text-gray-600">${mName}</td>
+                <td class="py-1.5 text-right font-bold text-indigo-600">${yearlyMonthCounts[idx]} ครั้ง</td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('yearly-table-content').innerHTML = `
+            <table class="w-full text-left border-collapse max-h-[240px]">
+                <thead>
+                    <tr class="border-b border-gray-200 text-xs text-gray-400 font-medium">
+                        <th class="pb-1">เดือน</th>
+                        <th class="pb-1 text-right">สถิติการจอง</th>
+                    </tr>
+                </thead>
+                <tbody>${yearlyCells}</tbody>
+            </table>`;
+
+        // [3] เรนเดอร์ตารางรายละเอียดประจำเดือนแบบดั้งเดิมตามที่คุณต้องการ
+        document.getElementById('stats-content').innerHTML = `
+            <div class="mt-2">
+                <h4 class="font-semibold text-base mb-3 text-yellow-700">📅 สรุปสถิติตารางประจำเดือน: ${monthYear}</h4>
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-yellow-50/60 border-b border-gray-200 text-sm font-semibold text-neutral-700">
+                                <th class="p-3">ชื่อห้องประชุม</th>
+                                <th class="p-3 text-right">จำนวนการใช้งาน</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-sm">
+                            ${ROOMS.map(r => `
+                                <tr class="hover:bg-gray-50/80 transition">
+                                    <td class="p-3 font-medium text-neutral-800">🏢 ${r}</td>
+                                    <td class="p-3 text-right font-bold text-yellow-700">${monthlyRoomCounts[r]||0} ครั้ง</td>
+                                </tr>
+                            `).join('')}
+                            <tr class="bg-gray-50/50 font-bold border-t border-gray-200 text-neutral-900">
+                                <td class="p-3">📊 รวมรายการจองเดือนนี้ทั้งหมด</td>
+                                <td class="p-3 text-right text-green-700">${monthlyBookings.length} รายการ</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>`;
+
+        // [4] อัปเดตและวาดแผนภูมิวงกลม
+        if (roomChartInstance) roomChartInstance.destroy();
+        const roomDataData = ROOMS.map(r => monthlyRoomCounts[r] || 0);
+        const ctxRoom = document.getElementById('roomChart').getContext('2d');
+        
+        roomChartInstance = new Chart(ctxRoom, {
+            type: 'doughnut',
+            data: {
+                labels: ROOMS.map(r => r.replace('ห้องประชุม ', '')), 
+                datasets: [{
+                    data: roomDataData,
+                    backgroundColor: ['#facc15', '#16a34a', '#2563eb', '#818cf8', '#ec4899'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { boxWidth: 10, font: { size: 10 } } 
+                    } 
+                }
+            }
+        });
     }
 
     function init() {
