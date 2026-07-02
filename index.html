@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <!-- ล็อกหน้าจอให้กว้าง 1024px เสมอ -->
   <meta name="viewport" content="width=1024">
   <title>Smart Meeting Room Booking - รพ.รร.จปร.</title>
   
@@ -22,7 +21,6 @@
     .modal-overlay { background: rgba(0,0,0,0.4); }
   </style>
 </head>
-<!-- เพิ่ม min-w-[1024px] เพื่อบังคับไม่ให้เว็บหดตัวแคบกว่านี้เด็ดขาด -->
 <body class="min-w-[1024px] min-h-screen" style="background: linear-gradient(rgb(240, 253, 244), rgb(255, 255, 255));">
   
   <header class="bg-white p-4 shadow-md flex flex-col items-center">
@@ -31,8 +29,7 @@
     <p class="text-lg text-[#b08b3e] font-semibold text-center mb-4">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
   </header>
 
-  <header class="p-4 shadow-md" style="background: linear-gradient(135deg, rgb(22, 101, 52), rgb(21, 128, 61));">
-   <!-- เปลี่ยนจาก max-w-4xl เป็น w-[960px] เพื่อล็อกความกว้างกล่องเนื้อหา -->
+  <div class="p-4 shadow-md" style="background: linear-gradient(135deg, rgb(22, 101, 52), rgb(21, 128, 61));">
    <div class="w-[960px] mx-auto">
     <h1 class="text-center font-bold" style="color: rgb(255, 255, 255); font-size: 22px;">ระบบจองห้องประชุม รพ.รร.จปร.</h1>
     <nav class="flex justify-center gap-2 mt-3">
@@ -41,9 +38,8 @@
      <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ</button>
     </nav>
    </div>
-  </header>
+  </div>
 
-  <!-- เปลี่ยนจาก max-w-4xl เป็น w-[960px] เพื่อล็อกความกว้างกล่องเนื้อหาหลัก -->
   <main class="w-[960px] mx-auto p-4">
    
    <section id="page-home">
@@ -75,7 +71,6 @@
 
     <div>
      <h3 class="font-semibold mb-3" style="color: rgb(26, 26, 26); font-size: 19px;">🏢 รายการห้องประชุม</h3>
-     <!-- ล็อคให้เป็น 2 คอลัมน์เสมอ -->
      <div class="grid grid-cols-2 gap-3" id="rooms-grid"></div>
     </div>
    </section>
@@ -98,17 +93,16 @@
     </div>
    </section>
 
-  <section id="page-stats" class="hidden">
- <div class="bg-white rounded-xl p-4 shadow">
-   <h2 class="font-bold mb-1" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
-   
-   <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg mb-4 mt-2 shadow-sm transition flex items-center gap-1.5">
-     📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
-   </button>
+   <section id="page-stats" class="hidden">
+    <div class="bg-white rounded-xl p-4 shadow">
+      <h2 class="font-bold mb-1" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
       
+      <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg mb-4 mt-2 shadow-sm transition flex items-center gap-1.5">
+         📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
+      </button>
+         
       <div id="stats-cards"></div>
-      
-      <!-- ล็อคให้เป็น 2 คอลัมน์เสมอ -->
+         
       <div class="grid grid-cols-2 gap-6 mt-6">
         <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (เดือนนี้)</h4>
@@ -278,7 +272,7 @@
         });
     }
 
-    function renderCalendar() {
+ function renderCalendar() {
         const grid = document.getElementById('cal-grid');
         const y = calMonth.getFullYear(), m = calMonth.getMonth();
         const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -290,6 +284,15 @@
         
         for (let i = 0; i < first; i++) html += '<div></div>';
         
+        // 🎨 Object กำหนดโค้ดสีตามชื่อห้องประชุม
+        const roomColors = {
+            'ห้องประชุม VIP ชั้น 1': { bg: '#FFFF33', text: '#1a1a1a', timeText: '#715a00' }, // เหลืองสด (ตัวหนังสือเข้ม)
+            'ห้องประชุม 1 ชั้น 2':   { bg: '#FF99CC', text: '#1a1a1a', timeText: '#991f5c' }, // ชมพู
+            'ห้องประชุม 2 ชั้น 2':   { bg: '#339966', text: '#ffffff', timeText: '#d1fae5' }, // เขียวเข้ม (ตัวหนังสือขาว)
+            'ห้องประชุม 3 ชั้น 3':   { bg: '#FFA500', text: '#ffffff', timeText: '#ffedd5' }, // ส้ม (ตัวหนังสือขาว)
+            'ห้องประชุมชั้น 6':      { bg: '#DDA0DD', text: '#1a1a1a', timeText: '#581c58' }  // ม่วง Plum
+        };
+        
         for (let d = 1; d <= days; d++) {
             const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
@@ -297,13 +300,19 @@
             
             const dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
             
-            const bookingsHtml = dayBookings.map(b => `
-                <div class="text-[9px] bg-emerald-600 text-white rounded p-1 mt-0.5 text-left shadow-sm leading-tight" 
-                     title="${b.start_time}-${b.end_time} | ${b.room_name} | ผู้จอง: ${b.booker_name} | วัตถุประสงค์: ${b.purpose}">
-                    <div class="font-bold whitespace-nowrap text-emerald-200">⏱️ ${b.start_time}</div>
-                    <div class="font-medium line-clamp-1 break-all">${b.purpose}</div>
-                </div>
-            `).join('');
+            const bookingsHtml = dayBookings.map(b => {
+                // ดึงค่าสีจาก Object หากไม่พบให้ใช้สีเทาเป็นค่าเริ่มต้น (Fallback)
+                const colorConfig = roomColors[b.room_name] || { bg: '#e5e7eb', text: '#1f2937', timeText: '#4b5563' };
+                
+                return `
+                    <div class="text-[9px] rounded p-1 mt-0.5 text-left shadow-sm leading-tight border border-black/5" 
+                         style="background-color: ${colorConfig.bg}; color: ${colorConfig.text};"
+                         title="${b.start_time}-${b.end_time} | ${b.room_name} | ผู้จอง: ${b.booker_name} | วัตถุประสงค์: ${b.purpose}">
+                        <div class="font-bold whitespace-nowrap" style="color: ${colorConfig.timeText};">⏱️ ${b.start_time}</div>
+                        <div class="font-medium line-clamp-1 break-all">${b.purpose}</div>
+                    </div>
+                `;
+            }).join('');
 
             let dayNumClass = 'w-6 h-6 flex items-center justify-center text-sm mx-auto hover:bg-yellow-100 rounded-full font-medium';
             if (isSel) dayNumClass += ' cal-selected';
@@ -330,6 +339,7 @@
 
     function getDateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
+    // แก้ไข String HTML Bug ตรงส่วนนี้
     function showDateBookings() {
         const panel = document.getElementById('date-bookings-panel');
         const list = document.getElementById('date-bookings-list');
@@ -337,8 +347,11 @@
         const bookings = allBookings.filter(b => b.date === ds && b.status === 'active');
         if (bookings.length === 0) { panel.classList.add('hidden'); return; }
         panel.classList.remove('hidden');
-        list.innerHTML = bookings.map(b => `<div class="bg-white rounded px-2 py-1 shadow-sm border border-gray-100">🕐 ${b.start_time}-${b.end_time} | </strong> | เรื่อง: ${b.purpose} (โดย: ${b.booker_name} <strong>${b.room_name}
-)</div>`).join('');
+        list.innerHTML = bookings.map(b => `
+            <div class="bg-white rounded px-2 py-1 shadow-sm border border-gray-100">
+                🕐 <strong>${b.start_time} - ${b.end_time}</strong> | <span class="text-green-700 font-medium">${b.room_name}</span> | เรื่อง: ${b.purpose} (โดย: ${b.booker_name})
+            </div>
+        `).join('');
     }
 
     function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
@@ -352,7 +365,7 @@
         const isTimeInvalid = st >= et;
 
         const todayObj = new Date();
-        const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+        const todayStr = getDateStr(todayObj);
         const isPastDate = ds < todayStr;
 
         grid.innerHTML = ROOMS.map(room => {
@@ -601,7 +614,7 @@
                 labels: ROOMS.map(r => r.replace('ห้องประชุม ', '')), 
                 datasets: [{
                     data: roomDataData,
-                    backgroundColor: ['#facc15', '#16a34a', '#2563eb', '#818cf8', '#ec4899'],
+                    backgroundColor: ['#ffff33', '#ff99cc', '#339966', '#ffa500', '#ddaadd'],
                     borderWidth: 1
                 }]
             },
