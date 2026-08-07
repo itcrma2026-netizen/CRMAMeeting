@@ -762,6 +762,15 @@
             if (confirm(`👑 [โหมดผู้ดูแลระบบ]\nต้องการยกเลิกการจองห้อง "${rec.room_name}" ของคุณ "${rec.booker_name}" ใช่หรือไม่?`)) {
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
+
+                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณี Admin ยกเลิก)
+                const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม (โดยผู้ดูแลระบบ)\n\n` +
+                                  `🏢 ห้อง: ${rec.room_name}\n` +
+                                  `👤 ผู้จองเดิม: ${rec.booker_name}\n` +
+                                  `📅 วันที่: ${rec.date}\n` +
+                                  `⏰ เวลา: ${rec.start_time} - ${rec.end_time}\n` +
+                                  `📝 วัตถุประสงค์: ${rec.purpose}`;
+                sendLineNotification(cancelMsg);
             }
             return;
         }
@@ -777,13 +786,20 @@
             if (confirm('🚨 ยืนยันตัวตนถูกต้อง! คุณต้องการยกเลิกการจองห้องประชุมนี้ใช่หรือไม่?\n(เมื่อยกเลิกแล้ว ห้องจะเปิดว่างเพื่อให้ผู้อื่นจองได้ทันที)')) {
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
+
+                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณีผู้ใช้ยกเลิกเอง)
+                const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม\n\n` +
+                                  `🏢 ห้อง: ${rec.room_name}\n` +
+                                  `👤 ผู้จอง: ${rec.booker_name}\n` +
+                                  `📅 วันที่: ${rec.date}\n` +
+                                  `⏰ เวลา: ${rec.start_time} - ${rec.end_time}\n` +
+                                  `📝 วัตถุประสงค์: ${rec.purpose}`;
+                sendLineNotification(cancelMsg);
             }
         } else {
             alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!\nไม่สามารถยกเลิกรายการจองของผู้อื่นได้ครับ');
         }
     }
-
-    let roomChartInstance = null;
 
     function renderStats() {
         const active = allBookings.filter(b => b.status === 'active');
