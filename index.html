@@ -122,37 +122,52 @@
    </section>
   </main>
 
+  <!-- ฟอร์มรายละเอียดการจองห้องประชุม (Modal) -->
   <div id="booking-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden">
-   <div class="bg-white rounded-2xl p-6 w-[450px] mx-4 shadow-xl">
+   <div class="bg-white rounded-2xl p-6 w-[520px] max-h-[90vh] overflow-y-auto mx-4 shadow-xl">
     <h3 class="font-bold text-lg mb-4" style="color: rgb(22, 101, 52);">📝 ฟอร์มรายละเอียดการจอง</h3>
     <form id="booking-form" class="space-y-3">
      <div>
       <label class="text-sm font-medium" for="form-room">ห้องประชุม</label> 
-      <input id="form-room" type="text" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-50 mt-1">
+      <input id="form-room" type="text" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-50 mt-1 font-semibold text-green-800">
+      <!-- แสดงอุปกรณ์ประจำห้อง -->
+      <div id="fixed-equipment-display" class="mt-1.5 p-2 bg-green-50/70 border border-green-200 rounded-lg text-xs text-green-800"></div>
      </div>
      <div>
       <label class="text-sm font-medium" for="form-datetime">วันที่ / เวลา</label> 
       <input id="form-datetime" type="text" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-50 mt-1">
      </div>
-     <div>
-      <label class="text-sm font-medium" for="form-name">ชื่อผู้จอง</label> 
-      <input id="form-name" type="text" required class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="กรอกชื่อ-นามสกุล">
-     </div>
-     <div>
-      <label class="text-sm font-medium" for="form-phone">เบอร์โทรศัพท์</label> 
-      <input id="form-phone" type="tel" required class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="กรอกเบอร์โทรที่ติดต่อได้">
+     <div class="grid grid-cols-2 gap-2">
+       <div>
+        <label class="text-sm font-medium" for="form-name">ชื่อผู้จอง</label> 
+        <input id="form-name" type="text" required class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="ชื่อ-นามสกุล">
+       </div>
+       <div>
+        <label class="text-sm font-medium" for="form-phone">เบอร์โทรศัพท์</label> 
+        <input id="form-phone" type="tel" required class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="เบอร์โทรติดต่อ">
+       </div>
      </div>
      <div>
       <label class="text-sm font-medium" for="form-purpose">วัตถุประสงค์ / ชื่อการประชุม</label> 
       <input id="form-purpose" type="text" required class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="เช่น ประชุมหน่วยงานประจำสัปดาห์">
      </div>
-     <div>
-      <label class="text-sm font-medium" for="form-equipment">อุปกรณ์ที่ต้องการเพิ่มเติม</label> 
-      <input id="form-equipment" type="text" class="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="เช่น ไมค์สาย 2 ตัว, สาย HDMI">
+     
+     <!-- อุปกรณ์ส่วนกลาง (เช็กสต็อกเรียลไทม์) -->
+     <div class="pt-1">
+      <label class="text-sm font-medium block text-neutral-800">📦 เลือกยืมอุปกรณ์ส่วนกลางเพิ่มเติม (ตัดสต็อกตามช่วงเวลา)</label>
+      <div id="inventory-list-container" class="mt-2 space-y-1.5 border rounded-xl p-3 bg-gray-50/60 max-h-48 overflow-y-auto"></div>
      </div>
-     <div class="flex gap-2 pt-2">
-      <button id="submit-btn" type="submit" class="flex-1 py-2 rounded-lg font-semibold text-sm bg-amber-400 hover:bg-amber-500 text-neutral-900 transition">✅ ยืนยันการจอง</button> 
-      <button type="button" onclick="closeModal()" class="flex-1 py-2 rounded-lg border text-sm hover:bg-gray-50 transition">ยกเลิก</button>
+
+     <!-- รหัส PIN 4 หลัก สำหรับใช้ยกเลิก -->
+     <div class="pt-1">
+      <label class="text-sm font-medium text-neutral-800 block" for="form-pin">🔐 ตั้งรหัส PIN 4 หลัก (สำหรับใช้ยกเลิกการจองนี้ด้วยตัวเอง)</label>
+      <input id="form-pin" type="text" required maxlength="4" pattern="[0-9]{4}" class="w-32 border rounded px-3 py-1.5 text-sm mt-1 text-center font-bold tracking-widest bg-amber-50 border-amber-300" placeholder="0000" title="กรุณากรอกตัวเลข 4 หลัก">
+      <span class="text-[11px] text-gray-500 ml-2">*(กรุณาจดจำรหัสนี้ไว้ เพื่อใช้ยกเลิกในภายหลัง)*</span>
+     </div>
+
+     <div class="flex gap-2 pt-3">
+      <button id="submit-btn" type="submit" class="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-amber-400 hover:bg-amber-500 text-neutral-900 shadow-sm transition">✅ ยืนยันการจอง</button> 
+      <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border text-sm hover:bg-gray-50 transition">ยกเลิก</button>
      </div>
     </form>
    </div>
@@ -165,6 +180,25 @@
         'ห้องประชุม 2 ชั้น 2',
         'ห้องประชุม 3 ชั้น 3',
         'ห้องประชุมชั้น 6'
+    ];
+
+    // 1. อุปกรณ์มาตรฐานประจำแต่ละห้อง (Fixed Equipment - ไม่ต้องนับสต็อก)
+    const ROOM_FIXED_EQUIPMENT = {
+        'ห้องประชุม VIP ชั้น 1': 'ทีวี 1 เครื่อง',
+        'ห้องประชุม 1 ชั้น 2': 'โปรเจกเตอร์ 1 เครื่อง',
+        'ห้องประชุม 2 ชั้น 2': 'ทีวี 4 จอ, โปรเจกเตอร์ 1 เครื่อง, ปลั๊กพ่วง 1 อัน, ไมค์ติดโต๊ะ',
+        'ห้องประชุม 3 ชั้น 3': 'โปรเจกเตอร์ 1 เครื่อง, อินเตอร์เน็ต',
+        'ห้องประชุมชั้น 6': 'สมาร์ททีวี 1 เครื่อง, อินเตอร์เน็ต'
+    };
+
+    // 2. อุปกรณ์ส่วนกลางที่ต้องนับสต็อก (Shared Inventory)
+    const SHARED_INVENTORY = [
+        { id: 'wireless_mic', name: 'ไมค์ลอย', total: 1 },
+        { id: 'wired_mic', name: 'ไมค์สาย', total: 2 },
+        { id: 'laptop', name: 'โน้ตบุ๊ค', total: 1 },
+        { id: 'lan_adapter', name: 'อุปกรณ์ต่อสายอินเตอร์เน็ตสำหรับโน้ตบุ๊ค', total: 1 },
+        { id: 'printer', name: 'เครื่องปิ้งเอกสาร', total: 1 },
+        { id: 'hdmi_cable', name: 'สาย HDMI', total: 1 }
     ];
 
     let allBookings = [];
@@ -272,7 +306,7 @@
         });
     }
 
- function renderCalendar() {
+    function renderCalendar() {
         const grid = document.getElementById('cal-grid');
         const y = calMonth.getFullYear(), m = calMonth.getMonth();
         const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -284,13 +318,12 @@
         
         for (let i = 0; i < first; i++) html += '<div></div>';
         
-        // 🎨 Object กำหนดโค้ดสีตามชื่อห้องประชุม
         const roomColors = {
-            'ห้องประชุม VIP ชั้น 1': { bg: '#FFFF33', text: '#1a1a1a', timeText: '#715a00' }, // เหลืองสด (ตัวหนังสือเข้ม)
-            'ห้องประชุม 1 ชั้น 2':   { bg: '#FF99CC', text: '#1a1a1a', timeText: '#991f5c' }, // ชมพู
-            'ห้องประชุม 2 ชั้น 2':   { bg: '#339966', text: '#ffffff', timeText: '#d1fae5' }, // เขียวเข้ม (ตัวหนังสือขาว)
-            'ห้องประชุม 3 ชั้น 3':   { bg: '#FFA500', text: '#ffffff', timeText: '#ffedd5' }, // ส้ม (ตัวหนังสือขาว)
-            'ห้องประชุมชั้น 6':      { bg: '#DDA0DD', text: '#1a1a1a', timeText: '#581c58' }  // ม่วง Plum
+            'ห้องประชุม VIP ชั้น 1': { bg: '#FFFF33', text: '#1a1a1a', timeText: '#715a00' },
+            'ห้องประชุม 1 ชั้น 2':   { bg: '#FF99CC', text: '#1a1a1a', timeText: '#991f5c' },
+            'ห้องประชุม 2 ชั้น 2':   { bg: '#339966', text: '#ffffff', timeText: '#d1fae5' },
+            'ห้องประชุม 3 ชั้น 3':   { bg: '#FFA500', text: '#ffffff', timeText: '#ffedd5' },
+            'ห้องประชุมชั้น 6':      { bg: '#DDA0DD', text: '#1a1a1a', timeText: '#581c58' }
         };
         
         for (let d = 1; d <= days; d++) {
@@ -301,7 +334,6 @@
             const dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
             
             const bookingsHtml = dayBookings.map(b => {
-                // ดึงค่าสีจาก Object หากไม่พบให้ใช้สีเทาเป็นค่าเริ่มต้น (Fallback)
                 const colorConfig = roomColors[b.room_name] || { bg: '#e5e7eb', text: '#1f2937', timeText: '#4b5563' };
                 
                 return `
@@ -339,7 +371,6 @@
 
     function getDateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
-    // แก้ไข String HTML Bug ตรงส่วนนี้
     function showDateBookings() {
         const panel = document.getElementById('date-bookings-panel');
         const list = document.getElementById('date-bookings-list');
@@ -367,6 +398,9 @@
         const todayObj = new Date();
         const todayStr = getDateStr(todayObj);
         const isPastDate = ds < todayStr;
+        
+        const currentTimeStr = `${String(todayObj.getHours()).padStart(2,'0')}:${String(todayObj.getMinutes()).padStart(2,'0')}`;
+        const isPastTimeToday = (ds === todayStr) && (st <= currentTimeStr);
 
         grid.innerHTML = ROOMS.map(room => {
             let booked = false;
@@ -374,10 +408,10 @@
                 booked = allBookings.some(b => b.room_name === room && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
             }
             
-            const avail = !booked && !isTimeInvalid && !isPastDate;
+            const avail = !booked && !isTimeInvalid && !isPastDate && !isPastTimeToday;
             
             let statusText = '✅ ว่าง (คลิกเพื่อจอง)';
-            if (isPastDate) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
+            if (isPastDate || isPastTimeToday) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
             else if (isTimeInvalid) statusText = '❌ ช่วงเวลาไม่ถูกต้อง';
             else if (booked) statusText = '❌ ไม่ว่าง (มีการจองแล้ว)';
 
@@ -390,15 +424,68 @@
         }).join('');
     }
 
+    // ฟังก์ชันคำนวณและแสดงอุปกรณ์ส่วนกลางที่เลือกได้ในเวลานั้น
+    function renderInventoryCheckboxes(dateStr, startTime, endTime) {
+        const container = document.getElementById('inventory-list-container');
+        
+        // กรองการจองอื่น ๆ ที่คาบเกี่ยวกับช่วงเวลาเดียวกันในวันนั้น
+        const overlappingBookings = allBookings.filter(b => 
+            b.date === dateStr && 
+            b.status === 'active' && 
+            isOverlap(startTime, endTime, b.start_time, b.end_time)
+        );
+
+        // นับจำนวนอุปกรณ์แต่ละชนิดที่ถูกยืมไปแล้วในเวลานั้น
+        const usedCount = {};
+        overlappingBookings.forEach(b => {
+            if (b.borrowed_items && Array.isArray(b.borrowed_items)) {
+                b.borrowed_items.forEach(itemId => {
+                    usedCount[itemId] = (usedCount[itemId] || 0) + 1;
+                });
+            }
+        });
+
+        // สร้าง HTML รายการ Checkbox
+        container.innerHTML = SHARED_INVENTORY.map(item => {
+            const borrowed = usedCount[item.id] || 0;
+            const available = item.total - borrowed;
+            const isOutOfStock = available <= 0;
+
+            return `
+                <label class="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-white transition cursor-pointer ${isOutOfStock ? 'opacity-50 cursor-not-allowed text-red-700 bg-red-50/50' : 'text-neutral-700'}">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="inventory_item" value="${item.id}" ${isOutOfStock ? 'disabled' : ''} class="rounded text-amber-500 focus:ring-amber-400">
+                        <span class="font-medium">${item.name}</span>
+                    </div>
+                    <span class="font-semibold ${isOutOfStock ? 'text-red-600' : 'text-green-700'}">
+                        ${isOutOfStock ? '❌ (ถูกยืมหมดแล้ว 0/' + item.total + ')' : '(ว่าง: ' + available + '/' + item.total + ')'}
+                    </span>
+                </label>
+            `;
+        }).join('');
+    }
+
     function openBooking(room) {
         selectedRoom = room;
         document.getElementById('form-room').value = room;
+        
+        // แสดงอุปกรณ์ประจำห้อง
+        const fixedEq = ROOM_FIXED_EQUIPMENT[room] || 'ไม่มีอุปกรณ์ประจำห้องพิเศษ';
+        document.getElementById('fixed-equipment-display').innerHTML = `<strong>📌 อุปกรณ์ประจำห้อง:</strong> ${fixedEq}`;
+
         const ds = getDateStr(selectedDate);
-        document.getElementById('form-datetime').value = `${ds} | ${document.getElementById('start-time').value} - ${document.getElementById('end-time').value}`;
+        const st = document.getElementById('start-time').value;
+        const et = document.getElementById('end-time').value;
+        
+        document.getElementById('form-datetime').value = `${ds} | ${st} - ${et}`;
         document.getElementById('form-name').value = '';
         document.getElementById('form-phone').value = '';
         document.getElementById('form-purpose').value = '';
-        document.getElementById('form-equipment').value = '';
+        document.getElementById('form-pin').value = '';
+        
+        // โหลดรายการเช็กสต็อกอุปกรณ์
+        renderInventoryCheckboxes(ds, st, et);
+
         document.getElementById('booking-modal').classList.remove('hidden');
     }
     
@@ -420,6 +507,14 @@
             return;
         }
 
+        // ดึงรายการอุปกรณ์ส่วนกลางที่เลือก
+        const checkedBoxes = document.querySelectorAll('input[name="inventory_item"]:checked');
+        const borrowedIds = Array.from(checkedBoxes).map(cb => cb.value);
+        const borrowedNames = borrowedIds.map(id => {
+            const found = SHARED_INVENTORY.find(item => item.id === id);
+            return found ? found.name : '';
+        }).filter(Boolean);
+
         const submitBtn = document.getElementById('submit-btn');
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังทำการบันทึกข้อมูล...";
@@ -429,7 +524,9 @@
             booker_name: document.getElementById('form-name').value.trim(),
             phone: document.getElementById('form-phone').value.trim(),
             purpose: document.getElementById('form-purpose').value.trim(),
-            equipment: document.getElementById('form-equipment').value.trim(),
+            equipment: borrowedNames.join(', '), // เก็บเป็นข้อความให้ตารางรายงานเดิมแสดงผลได้ปกติ
+            borrowed_items: borrowedIds,         // เก็บเป็น ID array สำหรับคำนวณสต็อก
+            pin_code: document.getElementById('form-pin').value.trim(), // เก็บรหัส PIN ยกเลิก
             date: ds,
             start_time: st,
             end_time: et,
@@ -441,7 +538,7 @@
             submitBtn.innerText = "✅ ยืนยันการจอง";
             if(success) {
                 closeModal();
-                alert("🎉 บันทึกการจองสำเร็จเรียบร้อยครับ!");
+                alert("🎉 บันทึกการจองสำเร็จเรียบร้อยครับ!\n\n*(อย่าลืมจดจำรหัส PIN ของท่านเพื่อใช้ในกรณีต้องการยกเลิกการจอง)*");
             }
         });
     });
@@ -479,7 +576,7 @@
                 <div class="text-sm text-neutral-700">
                     <strong>${b.booker_name}</strong> (📞 ${b.phone}) — <span class="text-green-700 font-medium">${b.room_name}</span><br>
                     <span class="text-gray-500">📅 วันที่: ${b.date} | 🕐 เวลา: ${b.start_time} - ${b.end_time}</span><br>
-                    <span class="text-xs text-gray-400">วัตถุประสงค์: ${b.purpose} ${b.equipment ? `| อุปกรณ์เพิ่มเติม: ${b.equipment}` : ''}</span>
+                    <span class="text-xs text-gray-400">วัตถุประสงค์: ${b.purpose} ${b.equipment ? `| อุปกรณ์เสริม: ${b.equipment}` : ''}</span>
                 </div>
                 <div>
                     <button onclick="cancelBooking('${b.__backendId}')" 
@@ -648,7 +745,7 @@
         const userInput = prompt("🔒 กรุณากรอกรหัสผ่าน (แอดมิน) เพื่อดาวน์โหลดไฟล์:");
         if (userInput === null) return;
         if (userInput !== _0x4f2a[0]) {
-            alert("❌ รหัสผ่านไม่ถูกต้อง! ไม่สิทธิ์ดาวน์โหลดรายงาน");
+            alert("❌ รหัสผ่านไม่ถูกต้อง! ไม่มีสิทธิ์ดาวน์โหลดรายงาน");
             return;
         }
         if (allBookings.length === 0) { alert('ไม่มีข้อมูลรายการจอง'); return; }
