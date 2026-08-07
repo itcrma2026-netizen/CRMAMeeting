@@ -23,21 +23,32 @@
 </head>
 <body class="min-w-[1024px] min-h-screen" style="background: linear-gradient(rgb(240, 253, 244), rgb(255, 255, 255));">
   
-  <header class="bg-white p-4 shadow-md flex flex-col items-center">
+  <header class="bg-white p-4 shadow-md flex flex-col items-center relative">
     <img src="01.png" width="80" height="80" alt="Logo">
     <h1 class="text-2xl font-bold text-[#166534] text-center mb-1">โรงพยาบาลโรงเรียนนายร้อยพระจุลจอมเกล้า</h1>
     <p class="text-lg text-[#b08b3e] font-semibold text-center mb-4">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
   </header>
 
   <div class="p-4 shadow-md" style="background: linear-gradient(135deg, rgb(22, 101, 52), rgb(21, 128, 61));">
-   <div class="w-[960px] mx-auto">
-    <h1 class="text-center font-bold" style="color: rgb(255, 255, 255); font-size: 22px;">ระบบจองห้องประชุม รพ.รร.จปร.</h1>
-    <nav class="flex justify-center gap-2 mt-3">
+   <div class="w-[960px] mx-auto flex items-center justify-between">
+    <h1 class="font-bold" style="color: rgb(255, 255, 255); font-size: 20px;">ระบบจองห้องประชุม รพ.รร.จปร.</h1>
+    
+    <nav class="flex items-center gap-2">
      <button id="tab-home" class="tab-active px-4 py-2 rounded-full text-sm transition" onclick="showPage('home')">🏠 หน้าหลัก</button> 
      <button id="tab-mybookings" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('mybookings')">📋 รายการจองทั้งหมด</button> 
      <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ</button>
+     
+     <!-- ปุ่มเข้าสู่ระบบแอดมิน -->
+     <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="px-3.5 py-2 rounded-full text-xs font-semibold bg-black/25 hover:bg-black/40 text-white border border-white/20 transition ml-2 flex items-center gap-1">
+        🔒 เข้าสู่ระบบแอดมิน
+     </button>
     </nav>
    </div>
+  </div>
+
+  <!-- แถบแจ้งเตือนเมื่ออยู่ในสถานะ Admin Mode -->
+  <div id="admin-banner" class="bg-amber-400 text-neutral-900 text-center py-1.5 text-xs font-bold shadow-inner hidden">
+    👑 คุณกำลังใช้งานในโหมด "ผู้ดูแลระบบ (Admin)" — สามารถจัดการยกเลิกทุกรายการจอง และดาวน์โหลดรายงาน Excel ได้ทันที
   </div>
 
   <main class="w-[960px] mx-auto p-4">
@@ -78,16 +89,21 @@
    <section id="page-mybookings" class="hidden">
     <div class="bg-white rounded-xl p-4 shadow">
      <h2 class="font-bold mb-3" style="color: rgb(22, 101, 52); font-size: 20px;">📋 รายการจองทั้งหมด (Real-time)</h2>
-     <div class="flex gap-2 flex-wrap mb-3 items-center">
-      <select id="filter-room" class="border rounded px-2 py-1 text-sm" onchange="renderMyBookings()"> 
-        <option value="">ทุกห้อง</option> 
-      </select> 
-      <input type="date" id="filter-date" class="border rounded px-2 py-1 text-sm" onchange="renderMyBookings()">
-      <button onclick="clearFilters()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1.5 rounded-lg border transition">ล้างตัวกรอง</button>
+     <div class="flex gap-2 flex-wrap mb-3 items-center justify-between">
+      <div class="flex gap-2 items-center">
+        <select id="filter-room" class="border rounded px-2 py-1 text-sm" onchange="renderMyBookings()"> 
+          <option value="">ทุกห้อง</option> 
+        </select> 
+        <input type="date" id="filter-date" class="border rounded px-2 py-1 text-sm" onchange="renderMyBookings()">
+        <button onclick="clearFilters()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg border transition">ล้างตัวกรอง</button>
+      </div>
+      
+      <!-- ปุ่มดาวน์โหลด Excel แสดงเฉพาะแอดมิน -->
+      <button id="btn-export-excel" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition hidden flex items-center gap-1.5">
+          📊 ดาวน์โหลดรายงาน Excel (.csv)
+      </button>
      </div>
-     <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg mb-3 shadow transition">
-        📊 ดาวน์โหลดรายงานลง Excel (.csv)
-     </button>
+     
      <div id="mybookings-list" class="space-y-2"></div>
      <p id="mybookings-empty" class="text-gray-400 text-center py-6 hidden">ยังไม่มีรายการจองในระบบ</p>
     </div>
@@ -95,11 +111,12 @@
 
    <section id="page-stats" class="hidden">
     <div class="bg-white rounded-xl p-4 shadow">
-      <h2 class="font-bold mb-1" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
-      
-      <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg mb-4 mt-2 shadow-sm transition flex items-center gap-1.5">
-         📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
-      </button>
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="font-bold" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
+        <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition hidden flex items-center gap-1.5">
+           📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
+        </button>
+      </div>
          
       <div id="stats-cards"></div>
          
@@ -130,7 +147,6 @@
      <div>
       <label class="text-sm font-medium" for="form-room">ห้องประชุม</label> 
       <input id="form-room" type="text" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-50 mt-1 font-semibold text-green-800">
-      <!-- แสดงอุปกรณ์ประจำห้อง -->
       <div id="fixed-equipment-display" class="mt-1.5 p-2 bg-green-50/70 border border-green-200 rounded-lg text-xs text-green-800"></div>
      </div>
      <div>
@@ -182,7 +198,6 @@
         'ห้องประชุมชั้น 6'
     ];
 
-    // 1. อุปกรณ์มาตรฐานประจำแต่ละห้อง (Fixed Equipment - ไม่ต้องนับสต็อก)
     const ROOM_FIXED_EQUIPMENT = {
         'ห้องประชุม VIP ชั้น 1': 'ทีวี 1 เครื่อง',
         'ห้องประชุม 1 ชั้น 2': 'โปรเจกเตอร์ 1 เครื่อง',
@@ -191,7 +206,6 @@
         'ห้องประชุมชั้น 6': 'สมาร์ททีวี 1 เครื่อง, อินเตอร์เน็ต'
     };
 
-    // 2. อุปกรณ์ส่วนกลางที่ต้องนับสต็อก (Shared Inventory)
     const SHARED_INVENTORY = [
         { id: 'wireless_mic', name: 'ไมค์ลอย', total: 1 },
         { id: 'wired_mic', name: 'ไมค์สาย', total: 2 },
@@ -205,6 +219,9 @@
     let selectedDate = new Date();
     let calMonth = new Date();
     let selectedRoom = null;
+    
+    // สถานะเข้าสู่ระบบแอดมิน (เริ่มต้นเป็น false = ผู้ใช้งานทั่วไป)
+    let isAdmin = false;
 
     const firebaseConfig = {
       apiKey: "AIzaSyC92wvC7DJJ8fTa0LQ5EB_xFECxqNXbbAc",
@@ -304,6 +321,55 @@
         ROOMS.forEach((r) => {
             filterRoom.innerHTML += `<option value="${r}">${r}</option>`;
         });
+    }
+
+    // ฟังก์ชันเปิด-ปิด โหมดแอดมิน (Admin Mode Toggle)
+    function toggleAdminMode() {
+        if (isAdmin) {
+            // กรณีล็อกอินอยู่แล้ว กดเพื่อออกจากระบบ
+            if(confirm('🔒 ต้องการออกจากระบบผู้ดูแลระบบใช่หรือไม่?')) {
+                isAdmin = false;
+                updateAdminUI();
+            }
+            return;
+        }
+
+        const _0x4f2a = ["\x43\x52\x4d\x41\x31\x31\x34\x39\x31"]; // "CRMA11491"
+        const inputPass = prompt("👑 กรุณากรอกรหัสผ่านสำหรับผู้ดูแลระบบ:");
+        if (inputPass === null) return;
+
+        if (inputPass === _0x4f2a[0]) {
+            isAdmin = true;
+            alert("✅ เข้าสู่ระบบผู้ดูแลเรียบร้อยแล้ว!\n(คุณสามารถดาวน์โหลดรายงาน Excel และจัดการยกเลิกได้ทุกรายการ)");
+            updateAdminUI();
+        } else {
+            alert("❌ รหัสผ่านไม่ถูกต้อง! ไม่สามารถเข้าใช้โหมดแอดมินได้");
+        }
+    }
+
+    // อัปเดตหน้าจอเมื่อเปลี่ยนสถานะ Admin
+    function updateAdminUI() {
+        const btnToggle = document.getElementById('btn-admin-toggle');
+        const banner = document.getElementById('admin-banner');
+        const btnExcel1 = document.getElementById('btn-export-excel');
+        const btnExcel2 = document.getElementById('btn-export-excel-stats');
+
+        if (isAdmin) {
+            btnToggle.innerHTML = "👑 โหมดแอดมิน (ออกจากระบบ)";
+            btnToggle.classList.replace('bg-black/25', 'bg-amber-500');
+            btnToggle.classList.replace('text-white', 'text-neutral-900');
+            banner.classList.remove('hidden');
+            if (btnExcel1) btnExcel1.classList.remove('hidden');
+            if (btnExcel2) btnExcel2.classList.remove('hidden');
+        } else {
+            btnToggle.innerHTML = "🔒 เข้าสู่ระบบแอดมิน";
+            btnToggle.classList.replace('bg-amber-500', 'bg-black/25');
+            btnToggle.classList.replace('text-neutral-900', 'text-white');
+            banner.classList.add('hidden');
+            if (btnExcel1) btnExcel1.classList.add('hidden');
+            if (btnExcel2) btnExcel2.classList.add('hidden');
+        }
+        renderMyBookings();
     }
 
     function renderCalendar() {
@@ -424,18 +490,15 @@
         }).join('');
     }
 
-    // ฟังก์ชันคำนวณและแสดงอุปกรณ์ส่วนกลางที่เลือกได้ในเวลานั้น
     function renderInventoryCheckboxes(dateStr, startTime, endTime) {
         const container = document.getElementById('inventory-list-container');
         
-        // กรองการจองอื่น ๆ ที่คาบเกี่ยวกับช่วงเวลาเดียวกันในวันนั้น
         const overlappingBookings = allBookings.filter(b => 
             b.date === dateStr && 
             b.status === 'active' && 
             isOverlap(startTime, endTime, b.start_time, b.end_time)
         );
 
-        // นับจำนวนอุปกรณ์แต่ละชนิดที่ถูกยืมไปแล้วในเวลานั้น
         const usedCount = {};
         overlappingBookings.forEach(b => {
             if (b.borrowed_items && Array.isArray(b.borrowed_items)) {
@@ -445,7 +508,6 @@
             }
         });
 
-        // สร้าง HTML รายการ Checkbox
         container.innerHTML = SHARED_INVENTORY.map(item => {
             const borrowed = usedCount[item.id] || 0;
             const available = item.total - borrowed;
@@ -469,7 +531,6 @@
         selectedRoom = room;
         document.getElementById('form-room').value = room;
         
-        // แสดงอุปกรณ์ประจำห้อง
         const fixedEq = ROOM_FIXED_EQUIPMENT[room] || 'ไม่มีอุปกรณ์ประจำห้องพิเศษ';
         document.getElementById('fixed-equipment-display').innerHTML = `<strong>📌 อุปกรณ์ประจำห้อง:</strong> ${fixedEq}`;
 
@@ -483,7 +544,6 @@
         document.getElementById('form-purpose').value = '';
         document.getElementById('form-pin').value = '';
         
-        // โหลดรายการเช็กสต็อกอุปกรณ์
         renderInventoryCheckboxes(ds, st, et);
 
         document.getElementById('booking-modal').classList.remove('hidden');
@@ -507,7 +567,6 @@
             return;
         }
 
-        // ดึงรายการอุปกรณ์ส่วนกลางที่เลือก
         const checkedBoxes = document.querySelectorAll('input[name="inventory_item"]:checked');
         const borrowedIds = Array.from(checkedBoxes).map(cb => cb.value);
         const borrowedNames = borrowedIds.map(id => {
@@ -524,9 +583,9 @@
             booker_name: document.getElementById('form-name').value.trim(),
             phone: document.getElementById('form-phone').value.trim(),
             purpose: document.getElementById('form-purpose').value.trim(),
-            equipment: borrowedNames.join(', '), // เก็บเป็นข้อความให้ตารางรายงานเดิมแสดงผลได้ปกติ
-            borrowed_items: borrowedIds,         // เก็บเป็น ID array สำหรับคำนวณสต็อก
-            pin_code: document.getElementById('form-pin').value.trim(), // เก็บรหัส PIN ยกเลิก
+            equipment: borrowedNames.join(', '),
+            borrowed_items: borrowedIds,
+            pin_code: document.getElementById('form-pin').value.trim(),
             date: ds,
             start_time: st,
             end_time: et,
@@ -572,7 +631,7 @@
         empty.classList.add('hidden');
         
         list.innerHTML = filtered.map(b => `
-            <div class="border rounded-lg p-3 flex justify-between items-center bg-gray-50 shadow-sm transition hover:bg-gray-100">
+            <div class="border rounded-lg p-3 flex justify-between items-center bg-gray-50 shadow-sm transition hover:bg-gray-100 ${isAdmin ? 'border-amber-300 bg-amber-50/20' : ''}">
                 <div class="text-sm text-neutral-700">
                     <strong>${b.booker_name}</strong> (📞 ${b.phone}) — <span class="text-green-700 font-medium">${b.room_name}</span><br>
                     <span class="text-gray-500">📅 วันที่: ${b.date} | 🕐 เวลา: ${b.start_time} - ${b.end_time}</span><br>
@@ -580,8 +639,8 @@
                 </div>
                 <div>
                     <button onclick="cancelBooking('${b.__backendId}')" 
-                            class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg font-semibold shadow-sm transition">
-                        ❌ ยกเลิกการจอง
+                            class="text-xs ${isAdmin ? 'bg-amber-400 hover:bg-amber-500 text-neutral-900' : 'bg-red-100 hover:bg-red-200 text-red-700'} px-3 py-2 rounded-lg font-semibold shadow-sm transition">
+                        ${isAdmin ? '👑 ยืนยันยกเลิกทันที (Admin)' : '❌ ยกเลิกการจอง'}
                     </button>
                 </div>
             </div>
@@ -594,13 +653,35 @@
         renderMyBookings();
     }
 
+    // ฟังก์ชันยกเลิกการจอง (ตรวจ PIN สำหรับ User / ทะลวงสิทธิ์ทันทีสำหรับ Admin)
     function cancelBooking(id) {
-        if(confirm('🚨 คุณต้องการยกเลิกรายการจองห้องประชุมนี้ใช่หรือไม่?\n(เมื่อยกเลิกแล้ว ห้องจะเปิดว่างเพื่อให้ผู้อื่นจองได้ทันที)')) {
-            const rec = allBookings.find(b => b.__backendId === id);
-            if (!rec) return;
-            
-            const updated = { ...rec, status: 'cancelled' };
-            db.update(updated);
+        const rec = allBookings.find(b => b.__backendId === id);
+        if (!rec) return;
+
+        // 1. กรณีเป็นแอดมิน (Admin Mode): ใช้สิทธิ์ Master Key ลบได้ทันทีไม่ต้องถาม PIN
+        if (isAdmin) {
+            if (confirm(`👑 [โหมดผู้ดูแลระบบ]\nต้องการยกเลิกการจองห้อง "${rec.room_name}" ของคุณ "${rec.booker_name}" ใช่หรือไม่?`)) {
+                const updated = { ...rec, status: 'cancelled' };
+                db.update(updated);
+            }
+            return;
+        }
+
+        // 2. กรณีเป็นผู้ใช้ทั่วไป (User): ต้องกรอก PIN 4 หลัก หรือ เบอร์โทร ให้ตรงกับที่จองไว้
+        const inputVerify = prompt(`🔐 เพื่อความปลอดภัย กรุณากรอก "รหัส PIN 4 หลัก" หรือ "เบอร์โทรศัพท์" ที่คุณใช้จองห้องประชุมนี้:`);
+        if (inputVerify === null) return; // กดปุ่มยกเลิกในกล่อง Prompt
+
+        const trimmedInput = inputVerify.trim();
+        const isPinMatch = rec.pin_code && trimmedInput === rec.pin_code;
+        const isPhoneMatch = rec.phone && trimmedInput === rec.phone;
+
+        if (isPinMatch || isPhoneMatch) {
+            if (confirm('🚨 ยืนยันตัวตนถูกต้อง! คุณต้องการยกเลิกการจองห้องประชุมนี้ใช่หรือไม่?\n(เมื่อยกเลิกแล้ว ห้องจะเปิดว่างเพื่อให้ผู้อื่นจองได้ทันที)')) {
+                const updated = { ...rec, status: 'cancelled' };
+                db.update(updated);
+            }
+        } else {
+            alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!\nไม่สามารถยกเลิกรายการจองของผู้อื่นได้ครับ');
         }
     }
 
@@ -741,11 +822,8 @@
     window.onload = init;
 
     function exportToExcel() {
-        const _0x4f2a = ["\x43\x52\x4d\x41\x31\x31\x34\x39\x31"]; 
-        const userInput = prompt("🔒 กรุณากรอกรหัสผ่าน (แอดมิน) เพื่อดาวน์โหลดไฟล์:");
-        if (userInput === null) return;
-        if (userInput !== _0x4f2a[0]) {
-            alert("❌ รหัสผ่านไม่ถูกต้อง! ไม่มีสิทธิ์ดาวน์โหลดรายงาน");
+        if (!isAdmin) {
+            alert("❌ สิทธิ์ไม่เพียงพอ! กรุณาเข้าสู่ระบบผู้ดูแลระบบ (Admin Mode) ก่อนดาวน์โหลดรายงาน");
             return;
         }
         if (allBookings.length === 0) { alert('ไม่มีข้อมูลรายการจอง'); return; }
