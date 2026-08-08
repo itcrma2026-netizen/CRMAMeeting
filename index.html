@@ -20,6 +20,9 @@
     .room-card { transition: all 0.2s ease; }
     .room-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
     .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    /* Custom Scrollbar for crowded calendar cells */
+    .cal-scroll::-webkit-scrollbar { width: 3px; }
+    .cal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
 <body class="min-w-[1024px] min-h-screen pb-12">
@@ -122,9 +125,9 @@
         <div id="date-bookings-panel" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 shadow-sm flex-grow hidden">
          <div class="flex items-center gap-2 mb-2">
            <i data-lucide="calendar-days" class="w-4 h-4 text-amber-700"></i>
-           <h3 class="font-bold text-xs uppercase tracking-wider text-amber-900">รายการจองวันที่เลือก</h3>
+           <h3 class="font-bold text-xs uppercase tracking-wider text-amber-900">รายการจองวันที่เลือก (ทั้งหมด)</h3>
          </div>
-         <div id="date-bookings-list" class="text-xs space-y-1.5 max-h-[140px] overflow-y-auto"></div>
+         <div id="date-bookings-list" class="text-xs space-y-1.5 max-h-[140px] overflow-y-auto pr-1"></div>
         </div>
 
       </div>
@@ -565,7 +568,12 @@
             
             const dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
             
-            const bookingsHtml = dayBookings.map(b => {
+            // แสดงรายการแบบรองรับการเลื่อน (Scrollable) หากมีหลายรายการ
+            const maxVisible = 2;
+            const visibleBookings = dayBookings.slice(0, maxVisible);
+            const hiddenCount = dayBookings.length - maxVisible;
+
+            const bookingsHtml = visibleBookings.map(b => {
                 const c = roomColors[b.room_name] || { bg: '#e5e7eb', text: '#1f2937', short: 'ห้อง' };
                 return `
                     <div class="text-[9px] rounded px-1 py-0.5 mt-0.5 text-left font-semibold truncate shadow-2xs" 
@@ -576,6 +584,8 @@
                 `;
             }).join('');
 
+            const moreHtml = hiddenCount > 0 ? `<div class="text-[9px] font-bold text-center text-amber-700 bg-amber-50 rounded mt-0.5">+{${hiddenCount}} รายการ (คลิกดูเพิ่ม)</div>` : '';
+
             let dayNumClass = 'w-7 h-7 flex items-center justify-center text-xs mx-auto hover:bg-emerald-50 rounded-xl font-bold transition';
             if (isSel) dayNumClass += ' cal-selected';
             else if (isToday) dayNumClass += ' cal-today';
@@ -583,8 +593,9 @@
             html += `
                 <div class="border border-gray-100 p-1 min-h-[90px] bg-white rounded-2xl flex flex-col justify-between cursor-pointer hover:border-emerald-200 transition shadow-2xs" onclick="selectDate('${dateStr}')">
                     <span class="${dayNumClass}">${d}</span>
-                    <div class="w-full mt-1 flex-grow flex flex-col gap-0.5 overflow-hidden">
+                    <div class="w-full mt-1 flex-grow flex flex-col gap-0.5 overflow-y-auto cal-scroll max-h-[55px]">
                         ${bookingsHtml}
+                        ${moreHtml}
                     </div>
                 </div>
             `;
