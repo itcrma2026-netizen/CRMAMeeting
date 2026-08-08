@@ -212,7 +212,7 @@
         
         fetch(WEB_APP_URL, {
             method: "POST",
-            mode: "no-cors", // ป้องกันปัญหา CORS บน GitHub Pages
+            mode: "no-cors",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -508,7 +508,7 @@
 
     function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
 
-  function renderRooms() {
+    function renderRooms() {
         const grid = document.getElementById('rooms-grid');
         const ds = getDateStr(selectedDate);
         const st = document.getElementById('start-time').value;
@@ -566,7 +566,7 @@
             </div>`;
         }).join('');
     }
-    
+
     function renderInventoryCheckboxes(dateStr, startTime, endTime) {
         const container = document.getElementById('inventory-list-container');
         
@@ -783,7 +783,6 @@
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
 
-                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณี Admin ยกเลิก)
                 const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม (โดยผู้ดูแลระบบ)\n\n` +
                                   `🏢 ห้อง: ${rec.room_name}\n` +
                                   `👤 ผู้จองเดิม: ${rec.booker_name}\n` +
@@ -807,7 +806,6 @@
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
 
-                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณีผู้ใช้ยกเลิกเอง)
                 const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม\n\n` +
                                   `🏢 ห้อง: ${rec.room_name}\n` +
                                   `👤 ผู้จอง: ${rec.booker_name}\n` +
@@ -820,6 +818,8 @@
             alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!\nไม่สามารถยกเลิกรายการจองของผู้อื่นได้ครับ');
         }
     }
+
+    let roomChartInstance = null;
 
     function renderStats() {
         const active = allBookings.filter(b => b.status === 'active');
