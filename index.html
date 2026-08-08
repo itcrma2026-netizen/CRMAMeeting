@@ -136,7 +136,6 @@
    </section>
   </main>
 
-  <!-- ฟอร์มรายละเอียดการจองห้องประชุม (Modal) -->
   <div id="booking-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden">
    <div class="bg-white rounded-2xl p-6 w-[540px] max-h-[90vh] overflow-y-auto mx-4 shadow-xl">
     <h3 class="font-bold text-lg mb-4" style="color: rgb(22, 101, 52);">📝 ฟอร์มรายละเอียดการจอง</h3>
@@ -147,7 +146,6 @@
       <div id="fixed-equipment-display" class="mt-1.5 p-2 bg-green-50/70 border border-green-200 rounded-lg text-xs text-green-800"></div>
      </div>
      
-     <!-- ส่วนเลือกจองแบบวันเดียว หรือ จองต่อเนื่องหลายวัน -->
      <div class="p-3 bg-blue-50/60 border border-blue-200 rounded-xl">
       <label class="text-sm font-semibold text-blue-900 block mb-1.5">📅 เลือกรูปแบบวันที่ต้องการจอง</label>
       <div class="flex gap-4 mb-2">
@@ -214,7 +212,7 @@
         
         fetch(WEB_APP_URL, {
             method: "POST",
-            mode: "no-cors", // ป้องกันปัญหา CORS บน GitHub Pages
+            mode: "no-cors",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -520,29 +518,51 @@
 
         const todayObj = new Date();
         const todayStr = getDateStr(todayObj);
+        
+        // บล็อกเฉพาะ "วันที่ผ่านมาแล้ว" (อดีต) เท่านั้น ส่วน "วันนี้" และ "อนาคต" อนุญาตให้จองได้ตลอดเวลา
         const isPastDate = ds < todayStr;
         
-        const currentTimeStr = `${String(todayObj.getHours()).padStart(2,'0')}:${String(todayObj.getMinutes()).padStart(2,'0')}`;
-        const isPastTimeToday = (ds === todayStr) && (st <= currentTimeStr);
-
         grid.innerHTML = ROOMS.map(room => {
             let booked = false;
             if(!isTimeInvalid) {
                 booked = allBookings.some(b => b.room_name === room && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
             }
             
-            const avail = !booked && !isTimeInvalid && !isPastDate && !isPastTimeToday;
+            const avail = !booked && !isTimeInvalid && !isPastDate;
             
             let statusText = '✅ ว่าง (คลิกเพื่อจอง)';
-            if (isPastDate || isPastTimeToday) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
+            if (isPastDate) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
             else if (isTimeInvalid) statusText = '❌ ช่วงเวลาไม่ถูกต้อง';
             else if (booked) statusText = '❌ ไม่ว่าง (มีการจองแล้ว)';
 
-            return `<div class="room-card border rounded-xl p-4 transition ${avail ? 'bg-green-50 border-green-300 hover:shadow-md cursor-pointer' : 'bg-red-50 border-red-200 opacity-70 cursor-not-allowed'}" onclick="${avail ? `openBooking('${room}')` : ''}">
+            // ระบบแนะนำห้องทดแทนอัตโนมัติ (Smart Suggestion) เมื่อห้องไม่ว่าง
+            let suggestionHtml = '';
+            if (booked && !isTimeInvalid && !isPastDate) {
+                const availableAlternativeRooms = ROOMS.filter(r => {
+                    if (r === room) return false;
+                    return !allBookings.some(b => b.room_name === r && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
+                });
+
+                if (availableAlternativeRooms.length > 0) {
+                    suggestionHtml = `<div class="mt-2 pt-2 border-t border-red-200 text-xs text-blue-800">
+                        💡 <strong>ห้องแนะนำที่ว่างเวลานี้:</strong><br>
+                        ${availableAlternativeRooms.map(altRoom => 
+                            `<span class="inline-block bg-white border border-blue-300 rounded px-1.5 py-0.5 mt-1 cursor-pointer hover:bg-blue-50 font-medium text-blue-700" onclick="event.stopPropagation(); openBooking('${altRoom}')">👉 ${altRoom} (คลิกจอง)</span>`
+                        .join(' '))}
+                    </div>`;
+                } else {
+                    suggestionHtml = `<div class="mt-2 pt-2 border-t border-red-200 text-[11px] text-red-700 font-medium">
+                        ⚠️ ห้องประชุมทั้งหมดเต็มในช่วงเวลานี้
+                    </div>`;
+                }
+            }
+
+            return `<div class="room-card border rounded-xl p-4 transition ${avail ? 'bg-green-50 border-green-300 hover:shadow-md cursor-pointer' : 'bg-red-50 border-red-200 opacity-90'}" onclick="${avail ? `openBooking('${room}')` : ''}">
                 <div class="font-semibold text-sm text-neutral-800">${room}</div>
                 <div class="mt-1 text-sm font-medium ${avail ? 'text-green-600' : 'text-red-600'}">
                     ${statusText}
                 </div>
+                ${suggestionHtml}
             </div>`;
         }).join('');
     }
@@ -763,7 +783,6 @@
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
 
-                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณี Admin ยกเลิก)
                 const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม (โดยผู้ดูแลระบบ)\n\n` +
                                   `🏢 ห้อง: ${rec.room_name}\n` +
                                   `👤 ผู้จองเดิม: ${rec.booker_name}\n` +
@@ -787,7 +806,6 @@
                 const updated = { ...rec, status: 'cancelled' };
                 db.update(updated);
 
-                // 📢 ส่งข้อความแจ้งเตือนยกเลิกเข้ากลุ่ม LINE (กรณีผู้ใช้ยกเลิกเอง)
                 const cancelMsg = `❌ แจ้งเตือนยกเลิกการจองห้องประชุม\n\n` +
                                   `🏢 ห้อง: ${rec.room_name}\n` +
                                   `👤 ผู้จอง: ${rec.booker_name}\n` +
@@ -800,6 +818,8 @@
             alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!\nไม่สามารถยกเลิกรายการจองของผู้อื่นได้ครับ');
         }
     }
+
+    let roomChartInstance = null;
 
     function renderStats() {
         const active = allBookings.filter(b => b.status === 'active');
