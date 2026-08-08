@@ -36,7 +36,7 @@
     <nav class="flex items-center gap-2">
      <button id="tab-home" class="tab-active px-4 py-2 rounded-full text-sm transition" onclick="showPage('home')">🏠 หน้าหลัก</button> 
      <button id="tab-mybookings" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('mybookings')">📋 รายการจองทั้งหมด</button> 
-     <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ</button>
+     <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ & รายงานวงรอบ</button>
      
      <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="px-3.5 py-2 rounded-full text-xs font-semibold bg-black/25 hover:bg-black/40 text-white border border-white/20 transition ml-2 flex items-center gap-1">
         🔒 เข้าสู่ระบบแอดมิน
@@ -108,33 +108,28 @@
 
    <section id="page-stats" class="hidden">
     <div class="bg-white rounded-xl p-4 shadow">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
         <div>
-          <h2 class="font-bold" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
-          <p class="text-xs text-gray-500">เลือกเดือนและปีที่ต้องการดูข้อมูลย้อนหลังได้ตามต้องการ</p>
+          <h2 class="font-bold" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติและรายงานประจำวงรอบ</h2>
+          <p class="text-xs text-gray-500">เลือกช่วงวันที่ต้องการออกรายงานเพื่อเสนอผู้บังคับบัญชา</p>
         </div>
         
-        <div class="flex items-center gap-2">
-          <select id="stats-filter-month" class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 font-medium" onchange="renderStats()">
-            <option value="0">มกราคม</option>
-            <option value="1">กุมภาพันธ์</option>
-            <option value="2">มีนาคม</option>
-            <option value="3">เมษายน</option>
-            <option value="4">พฤษภาคม</option>
-            <option value="5">มิถุนายน</option>
-            <option value="6">กรกฎาคม</option>
-            <option value="7">สิงหาคม</option>
-            <option value="8">กันยายน</option>
-            <option value="9">ตุลาคม</option>
-            <option value="10">พฤศจิกายน</option>
-            <option value="11">ธันวาคม</option>
-          </select>
+        <div class="flex items-center gap-2 flex-wrap bg-gray-50 p-2 rounded-xl border">
+          <div class="flex items-center gap-1 text-xs">
+            <span class="font-medium text-gray-700">ตั้งแต่:</span>
+            <input type="date" id="stats-start-date" class="border rounded px-2 py-1 text-xs bg-white font-medium" onchange="renderStats()">
+          </div>
+          <div class="flex items-center gap-1 text-xs">
+            <span class="font-medium text-gray-700">ถึง:</span>
+            <input type="date" id="stats-end-date" class="border rounded px-2 py-1 text-xs bg-white font-medium" onchange="renderStats()">
+          </div>
+          
+          <button onclick="setStatsRange('thisMonth')" class="text-[11px] bg-white border hover:bg-gray-100 px-2 py-1 rounded font-medium text-gray-700 shadow-sm">เดือนนี้</button>
+          <button onclick="setStatsRange('lastMonth')" class="text-[11px] bg-white border hover:bg-gray-100 px-2 py-1 rounded font-medium text-gray-700 shadow-sm">เดือนที่แล้ว</button>
+          <button onclick="setStatsRange('thisYear')" class="text-[11px] bg-white border hover:bg-gray-100 px-2 py-1 rounded font-medium text-gray-700 shadow-sm">ปีนี้</button>
 
-          <select id="stats-filter-year" class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 font-medium" onchange="renderStats()">
-          </select>
-
-          <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition hidden flex items-center gap-1.5 ml-2">
-              📊 ดาวน์โหลดรายงาน (.csv)
+          <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition hidden flex items-center gap-1.5 ml-1">
+              📊 ดาวน์โหลดรายงานช่วงนี้ (.csv)
           </button>
         </div>
       </div>
@@ -143,19 +138,22 @@
          
       <div class="grid grid-cols-2 gap-6 mt-6">
         <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (ตามช่วงเวลาที่เลือก)</h4>
+          <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (ช่วงเวลาที่เลือก)</h4>
           <div class="max-w-[240px] mx-auto w-full">
             <canvas id="roomChart"></canvas>
           </div>
         </div>
         
         <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <h4 id="yearly-table-title" class="font-semibold text-sm mb-3 text-neutral-700 text-center">🗓️ ภาพรวมรายปี พ.ศ.</h4>
-          <div id="yearly-table-content" class="overflow-x-auto"></div>
+          <h4 id="utilization-table-title" class="font-semibold text-sm mb-3 text-neutral-700 text-center">📈 อัตราการใช้ห้องประชุม (% Utilization)</h4>
+          <div id="utilization-table-content" class="overflow-x-auto"></div>
         </div>
       </div>
 
-      <div id="stats-content" class="mt-6"></div>
+      <div class="grid grid-cols-2 gap-6 mt-6">
+        <div id="inventory-stats-content"></div>
+        <div id="stats-content"></div>
+      </div>
     </div>
    </section>
   </main>
@@ -336,14 +334,12 @@
         }
     };
 
-    // ⏰ ปรับเวลาให้จำกัดเฉพาะช่วงเวลาทำการ 07:00 - 18:00 น.
     function populateTimes() {
         const s = document.getElementById('start-time');
         const e = document.getElementById('end-time');
         s.innerHTML = ''; e.innerHTML = '';
         for (let h = 7; h <= 18; h++) {
             for (let m = 0; m < 60; m += 30) {
-                // ถ้าเป็นเวลา 18:30 ขึ้นไปจะไม่เอา (เอาถึง 18:00 พอ)
                 if (h === 18 && m > 0) continue;
                 const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
                 s.innerHTML += `<option value="${t}">${t}</option>`;
@@ -377,15 +373,36 @@
         });
     }
 
-    function populateStatsYears() {
-        const yearSelect = document.getElementById('stats-filter-year');
-        if (!yearSelect) return;
-        const currentYear = new Date().getFullYear();
-        yearSelect.innerHTML = '';
-        for (let y = currentYear - 2; y <= currentYear + 1; y++) {
-            yearSelect.innerHTML += `<option value="${y}">พ.ศ. ${y + 543}</option>`;
+    // กำหนดค่าเริ่มต้นช่วงวันที่ในหน้าสถิติ
+    function initStatsDates() {
+        const startInput = document.getElementById('stats-start-date');
+        const endInput = document.getElementById('stats-end-date');
+        if (!startInput || !endInput) return;
+
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        startInput.value = getDateStr(firstDay);
+        endInput.value = getDateStr(lastDay);
+    }
+
+    function setStatsRange(type) {
+        const now = new Date();
+        const startInput = document.getElementById('stats-start-date');
+        const endInput = document.getElementById('stats-end-date');
+        
+        if (type === 'thisMonth') {
+            startInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+            endInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+        } else if (type === 'lastMonth') {
+            startInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+            endInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth(), 0));
+        } else if (type === 'thisYear') {
+            startInput.value = `${now.getFullYear()}-01-01`;
+            endInput.value = `${now.getFullYear()}-12-31`;
         }
-        yearSelect.value = currentYear;
+        renderStats();
     }
 
     function toggleAdminMode() {
@@ -552,10 +569,8 @@
         const et = document.getElementById('end-time').value;
         
         const isTimeInvalid = st >= et;
-
         const todayObj = new Date();
         const todayStr = getDateStr(todayObj);
-        
         const isPastDate = ds < todayStr;
         
         grid.innerHTML = ROOMS.map(room => {
@@ -660,7 +675,6 @@
         document.getElementById('form-pin').value = '';
         
         renderInventoryCheckboxes(ds, st, et);
-
         document.getElementById('booking-modal').classList.remove('hidden');
     }
     
@@ -724,6 +738,7 @@
                 purpose: document.getElementById('form-purpose').value.trim() + (isMultiDay ? ` (จองต่อเนื่อง ${targetDates.length} วัน)` : ''),
                 equipment: borrowedNames.join(', '),
                 borrowed_items: borrowedIds,
+                borrowed_details: SHARED_INVENTORY.filter(i => borrowedIds.includes(i.id)).map(i => i.name),
                 pin_code: document.getElementById('form-pin').value.trim(),
                 date: ds,
                 start_time: st,
@@ -747,7 +762,6 @@
                                         `${borrowedNames.length > 0 ? `\n📦 อุปกรณ์เสริม: ${borrowedNames.join(', ')}` : ''}`;
                         
                         sendLineNotification(lineMsg);
-
                         closeModal();
                         alert(`🎉 บันทึกการจองสำเร็จทั้ง ${targetDates.length} วันเรียบร้อยครับ!\n\n*(อย่าลืมจดจำรหัส PIN ของท่านเพื่อใช้ในกรณีต้องการยกเลิกการจอง)*`);
                     }
@@ -766,7 +780,12 @@
             document.getElementById('filter-date').value = getDateStr(selectedDate);
             renderMyBookings();
         }
-        if (page==='stats') renderStats();
+        if (page==='stats') {
+            if (!document.getElementById('stats-start-date').value) {
+                initStatsDates();
+            }
+            renderStats();
+        }
     }
 
     function renderMyBookings() {
@@ -854,78 +873,124 @@
 
     let roomChartInstance = null;
 
+    // คำนวณชั่วโมงระหว่างเวลาเริ่มและสิ้นสุด
+    function getHoursBetween(st, et) {
+        const [sh, sm] = st.split(':').map(Number);
+        const [eh, em] = et.split(':').map(Number);
+        return (eh + em/60) - (sh + sm/60);
+    }
+
     function renderStats() {
+        const startDateStr = document.getElementById('stats-start-date').value;
+        const endDateStr = document.getElementById('stats-end-date').value;
+
         const active = allBookings.filter(b => b.status === 'active');
-        const total = active.length;
+        
+        // กรองข้อมูลตามช่วงวันที่ผู้ใช้เลือก (Custom Date Range)
+        const rangeBookings = active.filter(b => {
+            if (!startDateStr || !endDateStr) return true;
+            return b.date >= startDateStr && b.date <= endDateStr;
+        });
+
+        const total = rangeBookings.length;
         const roomCounts = {};
         const hourCounts = {};
+        const inventoryCounts = {};
         
-        active.forEach(b => {
+        SHARED_INVENTORY.forEach(i => inventoryCounts[i.name] = 0);
+
+        rangeBookings.forEach(b => {
             roomCounts[b.room_name] = (roomCounts[b.room_name]||0) + 1;
             const h = b.start_time?.split(':')[0];
             if (h) hourCounts[h] = (hourCounts[h]||0) + 1;
-        });
-        const topRoom = Object.entries(roomCounts).sort((a,b)=>b[1]-a[1])[0];
-        const topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
 
-        const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-        
-        const selectedMonth = parseInt(document.getElementById('stats-filter-month').value);
-        const selectedYear = parseInt(document.getElementById('stats-filter-year').value);
-
-        const monthlyBookings = active.filter(b => {
-            const [y, m] = b.date.split('-').map(Number);
-            return y === selectedYear && m === selectedMonth + 1;
-        });
-        
-        const monthlyRoomCounts = {};
-        monthlyBookings.forEach(b => {
-            monthlyRoomCounts[b.room_name] = (monthlyRoomCounts[b.room_name]||0) + 1;
-        });
-        const monthYear = `${thMonths[selectedMonth]} ${selectedYear + 543}`;
-        
-        const yearlyBookings = active.filter(b => {
-            const [y] = b.date.split('-').map(Number);
-            return y === selectedYear;
-        });
-        const yearlyMonthCounts = Array(12).fill(0);
-        yearlyBookings.forEach(b => {
-            const [_, m] = b.date.split('-').map(Number);
-            if (m >= 1 && m <= 12) {
-                yearlyMonthCounts[m - 1] += 1;
+            if (b.borrowed_items && Array.isArray(b.borrowed_items)) {
+                b.borrowed_items.forEach(itemId => {
+                    const found = SHARED_INVENTORY.find(i => i.id === itemId);
+                    if (found) inventoryCounts[found.name] = (inventoryCounts[found.name]||0) + 1;
+                });
             }
         });
 
+        const topRoom = Object.entries(roomCounts).sort((a,b)=>b[1]-a[1])[0];
+        const topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
+
+        // คำนวณอัตราการใช้ห้อง (% Utilization Rate) สมมติเวลาทำการ 11 ชม.ต่อวัน (07:00-18:00)
+        let totalDaysInRange = 1;
+        if (startDateStr && endDateStr) {
+            const d1 = new Date(startDateStr);
+            const d2 = new Date(endDateStr);
+            totalDaysInRange = Math.max(1, Math.round((d2 - d1)/(1000*60*60*24)) + 1);
+        }
+        const totalAvailableHoursPerRoom = totalDaysInRange * 11; // 11 ชั่วโมง/วัน
+
         document.getElementById('stats-cards').innerHTML = `
             <div class="grid grid-cols-3 gap-3">
-                <div class="bg-green-50 rounded-xl p-4 text-center border border-green-100 shadow-sm"><div class="text-2xl font-bold text-green-700">${total}</div><div class="text-sm text-gray-600">จำนวนการจองทั้งหมด</div></div>
-                <div class="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-100 shadow-sm"><div class="text-lg font-bold text-yellow-700">${topRoom?topRoom[0]:'—'}</div><div class="text-sm text-gray-600">ห้องที่ใช้บ่อยที่สุด</div></div>
+                <div class="bg-green-50 rounded-xl p-4 text-center border border-green-100 shadow-sm"><div class="text-2xl font-bold text-green-700">${total}</div><div class="text-sm text-gray-600">การจองในช่วงที่เลือก</div></div>
+                <div class="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-100 shadow-sm"><div class="text-lg font-bold text-yellow-700">${topRoom?topRoom[0]:'—'}</div><div class="text-sm text-gray-600">ห้องยอดฮิตประจำรอบ</div></div>
                 <div class="bg-blue-50 rounded-xl p-4 text-center border border-blue-100 shadow-sm"><div class="text-lg font-bold text-blue-700">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-sm text-gray-600">ช่วงเวลายอดนิยม</div></div>
             </div>`;
 
-        document.getElementById('yearly-table-title').textContent = `🗓️ ภาพรวมรายปี พ.ศ. ${selectedYear + 543} (รวม ${yearlyBookings.length} ครั้ง)`;
-        
-        let yearlyCells = thMonths.map((mName, idx) => `
-            <tr class="border-b border-gray-100 text-xs">
-                <td class="py-1.5 font-medium text-gray-600">${mName}</td>
-                <td class="py-1.5 text-right font-bold text-indigo-600">${yearlyMonthCounts[idx]} ครั้ง</td>
-            </tr>
-        `).join('');
-        
-        document.getElementById('yearly-table-content').innerHTML = `
+        // ตารางอัตราการใช้งาน (% Utilization Rate)
+        let utilizationCells = ROOMS.map(r => {
+            const roomBookings = rangeBookings.filter(b => b.room_name === r);
+            let totalHoursUsed = 0;
+            roomBookings.forEach(b => {
+                totalHoursUsed += getHoursBetween(b.start_time, b.end_time);
+            });
+            const percent = Math.min(100, ((totalHoursUsed / totalAvailableHoursPerRoom) * 100)).toFixed(1);
+            return `
+                <tr class="border-b border-gray-100 text-xs">
+                    <td class="py-1.5 font-medium text-gray-700">🏢 ${r}</td>
+                    <td class="py-1.5 text-right text-gray-600">${totalHoursUsed.toFixed(1)} ชม.</td>
+                    <td class="py-1.5 text-right font-bold text-emerald-700">${percent}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        document.getElementById('utilization-table-title').textContent = `📈 อัตราการใช้ห้อง (% Utilization) — (${totalDaysInRange} วัน)`;
+        document.getElementById('utilization-table-content').innerHTML = `
             <table class="w-full text-left border-collapse max-h-[240px]">
                 <thead>
                     <tr class="border-b border-gray-200 text-xs text-gray-400 font-medium">
-                        <th class="pb-1">เดือน</th>
-                        <th class="pb-1 text-right">สถิติการจอง</th>
+                        <th class="pb-1">ห้องประชุม</th>
+                        <th class="pb-1 text-right">เวลาที่ใช้รวม</th>
+                        <th class="pb-1 text-right">% อัตราการใช้</th>
                     </tr>
                 </thead>
-                <tbody>${yearlyCells}</tbody>
+                <tbody>${utilizationCells}</tbody>
             </table>`;
 
+        // ตารางสรุปการยืมอุปกรณ์ส่วนกลาง
+        let inventoryCells = Object.entries(inventoryCounts).map(([itemName, count]) => `
+            <tr class="border-b border-gray-100 text-xs">
+                <td class="py-1.5 font-medium text-gray-700">📦 ${itemName}</td>
+                <td class="py-1.5 text-right font-bold text-indigo-600">${count} ครั้ง</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('inventory-stats-content').innerHTML = `
+            <div>
+                <h4 class="font-semibold text-base mb-3 text-indigo-800">📦 สรุปสถิติการยืมอุปกรณ์เสริม (ประจำรอบ)</h4>
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-indigo-50/60 border-b border-gray-200 text-sm font-semibold text-neutral-700">
+                                <th class="p-3">รายการอุปกรณ์</th>
+                                <th class="p-3 text-right">จำนวนครั้งที่ถูกยืม</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-sm">
+                            ${inventoryCells}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+
+        // ตารางสรุปสถิติตามห้อง
         document.getElementById('stats-content').innerHTML = `
-            <div class="mt-2">
-                <h4 class="font-semibold text-base mb-3 text-yellow-700">📅 สรุปสถิติตารางประจำเดือน: ${monthYear}</h4>
+            <div>
+                <h4 class="font-semibold text-base mb-3 text-yellow-700">📅 สรุปจำนวนครั้งแยกตามห้องประชุม</h4>
                 <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -938,12 +1003,12 @@
                             ${ROOMS.map(r => `
                                 <tr class="hover:bg-gray-50/80 transition">
                                     <td class="p-3 font-medium text-neutral-800">🏢 ${r}</td>
-                                    <td class="p-3 text-right font-bold text-yellow-700">${monthlyRoomCounts[r]||0} ครั้ง</td>
+                                    <td class="p-3 text-right font-bold text-yellow-700">${roomCounts[r]||0} ครั้ง</td>
                                 </tr>
                             `).join('')}
                             <tr class="bg-gray-50/50 font-bold border-t border-gray-200 text-neutral-900">
-                                <td class="p-3">📊 รวมรายการจองเดือนที่เลือกทั้งหมด</td>
-                                <td class="p-3 text-right text-green-700">${monthlyBookings.length} รายการ</td>
+                                <td class="p-3">📊 รวมทั้งสิ้น</td>
+                                <td class="p-3 text-right text-green-700">${total} รายการ</td>
                             </tr>
                         </tbody>
                     </table>
@@ -951,7 +1016,7 @@
             </div>`;
 
         if (roomChartInstance) roomChartInstance.destroy();
-        const roomDataData = ROOMS.map(r => monthlyRoomCounts[r] || 0);
+        const roomDataData = ROOMS.map(r => roomCounts[r] || 0);
         const ctxRoom = document.getElementById('roomChart').getContext('2d');
         
         roomChartInstance = new Chart(ctxRoom, {
@@ -979,12 +1044,7 @@
     function init() {
         populateTimes();
         populateFilterRooms();
-        populateStatsYears();
         
-        const now = new Date();
-        const monthSelect = document.getElementById('stats-filter-month');
-        if (monthSelect) monthSelect.value = now.getMonth();
-
         const filterDateInput = document.getElementById('filter-date');
         if (filterDateInput) {
             filterDateInput.value = getDateStr(new Date());
@@ -994,6 +1054,7 @@
     }
     window.onload = init;
 
+    // ฟังก์ชันส่งออกรายงาน Excel (.csv) เฉพาะช่วงวันที่เลือกในหน้าสถิติ
     function exportToExcel() {
         if (!isAdmin) {
             alert("❌ สิทธิ์ไม่เพียงพอ! กรุณาเข้าสู่ระบบผู้ดูแลระบบ (Admin Mode) ก่อนดาวน์โหลดรายงาน");
@@ -1001,10 +1062,22 @@
         }
         if (allBookings.length === 0) { alert('ไม่มีข้อมูลรายการจอง'); return; }
         
+        const startDateStr = document.getElementById('stats-start-date').value;
+        const endDateStr = document.getElementById('stats-end-date').value;
+
+        let activeBookings = allBookings.filter(b => b.status === 'active');
+        if (startDateStr && endDateStr) {
+            activeBookings = activeBookings.filter(b => b.date >= startDateStr && b.date <= endDateStr);
+        }
+
+        if (activeBookings.length === 0) {
+            alert('⚠️ ไม่พบข้อมูลการจองในช่วงวันที่คุณเลือก');
+            return;
+        }
+        
         let csvContent = "\uFEFF"; 
         csvContent += "วันที่,เวลาเริ่ม,เวลาสิ้นสุด,ห้องประชุม,ชื่อผู้จอง,เบอร์โทร,วัตถุประสงค์,อุปกรณ์,สถานะ\n";
         
-        const activeBookings = allBookings.filter(b => b.status === 'active');
         activeBookings.sort((a,b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
 
         activeBookings.forEach(b => {
@@ -1015,7 +1088,7 @@
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `รายงานการจองห้องประชุม_รพ_รร_จปร_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.csv`);
+        link.setAttribute("download", `รายงานรอบ_${startDateStr}_ถึง_${endDateStr}_รพ_รร_จปร.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
