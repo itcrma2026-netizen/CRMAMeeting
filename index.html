@@ -508,7 +508,7 @@
 
     function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
 
-    function renderRooms() {
+   function renderRooms() {
         const grid = document.getElementById('rooms-grid');
         const ds = getDateStr(selectedDate);
         const st = document.getElementById('start-time').value;
@@ -520,8 +520,14 @@
         const todayStr = getDateStr(todayObj);
         const isPastDate = ds < todayStr;
         
-        const currentTimeStr = `${String(todayObj.getHours()).padStart(2,'0')}:${String(todayObj.getMinutes()).padStart(2,'0')}`;
-        const isPastTimeToday = (ds === todayStr) && (st <= currentTimeStr);
+        // เปรียบเทียบเฉพาะเวลาปัจจุบัน (เผื่อเทียบสตริงผิดรูปแบบ)
+        const currentHours = String(todayObj.getHours()).padStart(2,'0');
+        const currentMinutes = String(todayObj.getMinutes()).padStart(2,'0');
+        const currentTimeStr = `${currentHours}:${currentMinutes}`;
+        
+        // เช็กว่าเป็นวันปัจจุบัน และเวลาเริ่มต้นผ่านไปแล้วจริงๆ หรือยัง
+        const isToday = (ds === todayStr);
+        const isPastTimeToday = isToday && (st < currentTimeStr); // ให้จองเวลาที่เท่ากับหรือเลยเวลาปัจจุบันไปนิดหน่อยได้ แต่ถ้าเลยช่วงเวลาไปแล้วค่อยบล็อก
 
         grid.innerHTML = ROOMS.map(room => {
             let booked = false;
@@ -532,15 +538,40 @@
             const avail = !booked && !isTimeInvalid && !isPastDate && !isPastTimeToday;
             
             let statusText = '✅ ว่าง (คลิกเพื่อจอง)';
-            if (isPastDate || isPastTimeToday) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
+            if (isPastDate) statusText = '❌ ไม่สามารถจองย้อนหลังได้';
+            else if (isPastTimeToday) statusText = '❌ เวลาเริ่มต้นได้ผ่านไปแล้วในวันนี้';
             else if (isTimeInvalid) statusText = '❌ ช่วงเวลาไม่ถูกต้อง';
             else if (booked) statusText = '❌ ไม่ว่าง (มีการจองแล้ว)';
 
-            return `<div class="room-card border rounded-xl p-4 transition ${avail ? 'bg-green-50 border-green-300 hover:shadow-md cursor-pointer' : 'bg-red-50 border-red-200 opacity-70 cursor-not-allowed'}" onclick="${avail ? `openBooking('${room}')` : ''}">
+            // เพิ่มปุ่มแนะนำห้องทดแทน (Smart Suggestion) เมื่อห้องไม่ว่าง
+            let suggestionHtml = '';
+            if (booked && !isTimeInvalid && !isPastDate && !isPastTimeToday) {
+                // หารายชื่อห้องอื่นที่ "ว่าง" ในช่วงเวลาเดียวกันนี้
+                const availableAlternativeRooms = ROOMS.filter(r => {
+                    if (r === room) return false;
+                    return !allBookings.some(b => b.room_name === r && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
+                });
+
+                if (availableAlternativeRooms.length > 0) {
+                    suggestionHtml = `<div class="mt-2 pt-2 border-t border-red-200 text-xs text-blue-800">
+                        💡 <strong>ห้องแนะนำที่ว่างเวลานี้:</strong><br>
+                        ${availableAlternativeRooms.map(altRoom => 
+                            `<span class="inline-block bg-white border border-blue-300 rounded px-1.5 py-0.5 mt-1 cursor-pointer hover:bg-blue-50 font-medium text-blue-700" onclick="event.stopPropagation(); openBooking('${altRoom}')">👉 ${altRoom} (คลิกจอง)</span>`
+                        .join(' '))}
+                    </div>`;
+                } else {
+                    suggestionHtml = `<div class="mt-2 pt-2 border-t border-red-200 text-[11px] text-red-700 font-medium">
+                        ⚠️ ห้องประชุมทั้งหมดเต็มในช่วงเวลานี้
+                    </div>`;
+                }
+            }
+
+            return `<div class="room-card border rounded-xl p-4 transition ${avail ? 'bg-green-50 border-green-300 hover:shadow-md cursor-pointer' : 'bg-red-50 border-red-200 opacity-90'}" onclick="${avail ? `openBooking('${room}')` : ''}">
                 <div class="font-semibold text-sm text-neutral-800">${room}</div>
                 <div class="mt-1 text-sm font-medium ${avail ? 'text-green-600' : 'text-red-600'}">
                     ${statusText}
                 </div>
+                ${suggestionHtml}
             </div>`;
         }).join('');
     }
