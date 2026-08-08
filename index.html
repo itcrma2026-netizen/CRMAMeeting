@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1024">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Meeting Room Booking - รพ.รร.จปร.</title>
   
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -20,212 +20,189 @@
     .room-card { transition: all 0.2s ease; }
     .room-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
     .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-    /* Custom Scrollbar for crowded calendar cells */
     .cal-scroll::-webkit-scrollbar { width: 3px; }
     .cal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    /* เพิ่ม Transition ให้ตอนขยายปฏิทินดูนุ่มนวล */
+    .cal-cell { transition: all 0.3s ease; }
   </style>
 </head>
-<body class="min-w-[1024px] min-h-screen pb-12">
+<body class="bg-slate-50 min-h-screen pb-12 font-sans overflow-x-hidden">
   
-  <header class="bg-white py-4 px-6 shadow-sm border-b border-gray-100 flex flex-col items-center relative">
+  <header class="bg-white py-4 px-4 shadow-sm border-b border-gray-100 flex flex-col items-center relative text-center">
     <img src="01.png" width="72" height="72" alt="Logo" class="mb-2 drop-shadow-sm">
-    <h1 class="text-2xl font-bold text-[#166534] tracking-tight text-center mb-0.5">โรงพยาบาลโรงเรียนนายร้อยพระจุลจอมเกล้า</h1>
-    <p class="text-xs tracking-wider text-[#b08b3e] font-bold text-center uppercase">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
+    <h1 class="text-xl md:text-2xl font-bold text-[#166534] tracking-tight mb-0.5">โรงพยาบาลโรงเรียนนายร้อยพระจุลจอมเกล้า</h1>
+    <p class="text-[10px] md:text-xs tracking-wider text-[#b08b3e] font-bold uppercase">CHULACHOMKLAO ROYAL MILITARY ACADEMY HOSPITAL</p>
   </header>
 
   <div class="shadow-md py-3.5 px-4" style="background: linear-gradient(135deg, #166534, #15803d);">
-   <div class="w-[960px] mx-auto flex items-center justify-between">
+   <div class="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
     <div class="flex items-center gap-2.5">
       <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
         <i data-lucide="calendar-check" class="w-5 h-5"></i>
       </div>
-      <h1 class="font-bold text-white text-lg tracking-wide">ระบบจองห้องประชุม รพ.รร.จปร.</h1>
+      <h1 class="font-bold text-white text-lg tracking-wide">ระบบจองห้องประชุม</h1>
     </div>
     
-    <nav class="flex items-center gap-1.5 bg-black/10 p-1 rounded-full backdrop-blur-sm">
-     <button id="tab-home" class="tab-active px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5" onclick="showPage('home')">
+    <nav class="flex flex-wrap items-center justify-center gap-1.5 bg-black/10 p-1.5 rounded-2xl backdrop-blur-sm">
+     <button id="tab-home" class="tab-active px-3 py-2 md:px-4 rounded-xl text-xs font-semibold transition flex items-center gap-1.5" onclick="showPage('home')">
        <i data-lucide="home" class="w-3.5 h-3.5"></i> หน้าหลัก
      </button> 
-     <button id="tab-mybookings" class="px-4 py-2 rounded-full text-xs font-semibold text-white/90 hover:text-white transition flex items-center gap-1.5" onclick="showPage('mybookings')">
-       <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> รายการจองทั้งหมด
+     <button id="tab-mybookings" class="px-3 py-2 md:px-4 rounded-xl text-xs font-semibold text-white/90 hover:text-white transition flex items-center gap-1.5" onclick="showPage('mybookings')">
+       <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> รายการจอง
      </button> 
-     <button id="tab-stats" class="px-4 py-2 rounded-full text-xs font-semibold text-white/90 hover:text-white transition flex items-center gap-1.5" onclick="showPage('stats')">
-       <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> สถิติ & รายงานวงรอบ
+     <button id="tab-stats" class="px-3 py-2 md:px-4 rounded-xl text-xs font-semibold text-white/90 hover:text-white transition flex items-center gap-1.5" onclick="showPage('stats')">
+       <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> สถิติ
      </button>
      
-     <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="px-3.5 py-2 rounded-full text-xs font-bold bg-white/20 hover:bg-white/30 text-white transition ml-2 flex items-center gap-1 shadow-inner">
+     <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/20 hover:bg-white/30 text-white transition md:ml-2 flex items-center gap-1 shadow-inner">
         <i data-lucide="shield" class="w-3.5 h-3.5"></i> แอดมิน
      </button>
     </nav>
    </div>
   </div>
 
-  <div id="admin-banner" class="bg-amber-400 text-neutral-900 text-center py-2 text-xs font-bold shadow-inner hidden flex items-center justify-center gap-2">
-    <i data-lucide="shield-alert" class="w-4 h-4"></i> คุณกำลังใช้งานในโหมด "ผู้ดูแลระบบ (Admin)" — สามารถจัดการยกเลิกทุกรายการจอง และดาวน์โหลดรายงาน Excel ได้ทันที
+  <div id="admin-banner" class="bg-amber-400 text-neutral-900 text-center py-2 px-4 text-xs font-bold shadow-inner hidden items-center justify-center gap-2">
+    <i data-lucide="shield-alert" class="w-4 h-4"></i> โหมด "ผู้ดูแลระบบ (Admin)" — สามารถยกเลิกการจองและออกรายงานได้
   </div>
 
-  <main class="w-[960px] mx-auto p-5 space-y-5">
+  <main class="w-full max-w-5xl mx-auto p-4 md:p-5 space-y-5">
    
    <section id="page-home" class="space-y-5">
-    
-    <div class="grid grid-cols-12 gap-5 items-stretch">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
       
-      <div class="col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
+      <div class="col-span-1 lg:col-span-7 bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
        <div>
-         <div class="flex items-center justify-between mb-3">
-          <button onclick="changeMonth(-1)" class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-          <h2 id="cal-month-label" class="font-bold text-base text-neutral-800"></h2>
-          <button onclick="changeMonth(1)" class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+         <div class="flex flex-col sm:flex-row items-center justify-between mb-3 gap-3">
+          <div class="flex items-center gap-3">
+            <button onclick="changeMonth(-1)" class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition bg-gray-50"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <h2 id="cal-month-label" class="font-bold text-base text-neutral-800 min-w-[120px] text-center"></h2>
+            <button onclick="changeMonth(1)" class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition bg-gray-50"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+          </div>
+          
+          <button id="btn-exec-mode" onclick="toggleExecMode()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm w-full sm:w-auto justify-center">
+            <i data-lucide="camera" class="w-4 h-4"></i> ขยายจอแคปส่งผู้บริหาร
+          </button>
          </div>
 
-         <div class="bg-gray-50 p-2 rounded-xl border border-gray-100 mb-3 flex flex-wrap gap-2 items-center justify-center text-[10px] font-bold">
-           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #fef08a; border: 1px solid #eab308;"></span> VIP ชั้น 1</div>
-           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #fbcfe8; border: 1px solid #ec4899;"></span> ห้อง 1 ชั้น 2</div>
-           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #d1fae5; border: 1px solid #10b981;"></span> ห้อง 2 ชั้น 2</div>
-           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #ffedd5; border: 1px solid #f97316;"></span> ห้อง 3 ชั้น 3</div>
+         <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 mb-3 flex flex-wrap gap-2 items-center justify-center text-[10px] md:text-xs font-bold">
+           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #fef08a; border: 1px solid #eab308;"></span> VIP</div>
+           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #fbcfe8; border: 1px solid #ec4899;"></span> ห้อง 1</div>
+           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #d1fae5; border: 1px solid #10b981;"></span> ห้อง 2</div>
+           <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #ffedd5; border: 1px solid #f97316;"></span> ห้อง 3</div>
            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: #f3e8ff; border: 1px solid #a855f7;"></span> ชั้น 6</div>
          </div>
        </div>
 
        <div>
-         <div class="grid grid-cols-7 text-center text-xs font-semibold text-neutral-400 mb-2">
+         <div class="grid grid-cols-7 text-center text-[11px] md:text-xs font-semibold text-neutral-400 mb-2">
           <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
          </div>
          <div id="cal-grid" class="grid grid-cols-7 text-center gap-1"></div>
        </div>
       </div>
 
-      <div class="col-span-5 flex flex-col gap-4">
+      <div class="col-span-1 lg:col-span-5 flex flex-col gap-4">
         
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-         <div>
+        <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
            <div class="flex items-center gap-2 mb-3">
              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                <i data-lucide="clock" class="w-4 h-4"></i>
              </div>
-             <h3 class="font-bold text-sm text-neutral-800">ช่วงเวลาทำการ (07:00 - 18:00 น.)</h3>
+             <h3 class="font-bold text-sm text-neutral-800">เวลาทำการ (07:00 - 18:00 น.)</h3>
            </div>
            
            <div class="space-y-3">
-            <div>
-              <label class="text-xs text-neutral-500 font-medium block mb-1">เวลาเริ่มต้น:</label>
-              <select id="start-time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50/50 font-semibold text-neutral-800 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
-            </div> 
-            <div>
-              <label class="text-xs text-neutral-500 font-medium block mb-1">เวลาสิ้นสุด:</label>
-              <select id="end-time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50/50 font-semibold text-neutral-800 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-neutral-500 font-medium block mb-1">เวลาเริ่มต้น:</label>
+                <select id="start-time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50/50 font-semibold text-neutral-800 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+              </div> 
+              <div>
+                <label class="text-xs text-neutral-500 font-medium block mb-1">เวลาสิ้นสุด:</label>
+                <select id="end-time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50/50 font-semibold text-neutral-800 focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+              </div>
             </div>
-            <div id="time-error" class="text-xs text-red-600 font-semibold bg-red-50 p-2 rounded-lg hidden flex items-center gap-1.5">
-              <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i> เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น
+            
+            <div id="time-error" class="text-xs text-red-600 font-semibold bg-red-50 p-2 rounded-lg hidden">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i> <span>เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น</span>
+              </div>
             </div>
            </div>
-         </div>
         </div>
 
-        <div id="date-bookings-panel" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 shadow-sm flex-grow hidden">
-         <div class="flex items-center gap-2 mb-2">
+        <div id="date-bookings-panel" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 shadow-sm hidden">
+         <div class="flex items-center gap-2 mb-3">
            <i data-lucide="calendar-days" class="w-4 h-4 text-amber-700"></i>
-           <h3 class="font-bold text-xs uppercase tracking-wider text-amber-900">รายการจองวันที่เลือก (ทั้งหมด)</h3>
+           <h3 class="font-bold text-xs uppercase tracking-wider text-amber-900">รายการจองวันที่เลือก</h3>
          </div>
-         <div id="date-bookings-list" class="text-xs space-y-1.5 max-h-[140px] overflow-y-auto pr-1"></div>
+         <div id="date-bookings-list" class="text-xs space-y-2 max-h-[220px] overflow-y-auto pr-1 cal-scroll"></div>
         </div>
 
       </div>
     </div>
 
     <div>
-     <div class="flex items-center justify-between mb-3.5">
-       <h3 class="font-bold text-lg text-neutral-800 flex items-center gap-2">
+     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+       <h3 class="font-bold text-base md:text-lg text-neutral-800 flex items-center gap-2">
          <i data-lucide="building-2" class="w-5 h-5 text-emerald-700"></i> รายการห้องประชุมทั้งหมด
        </h3>
-       <span class="text-xs text-neutral-500 font-medium">คลิกที่การ์ดห้องที่ว่างเพื่อทำรายการจอง</span>
+       <span class="text-xs text-neutral-500 font-medium bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm inline-block">คลิกที่การ์ดห้องที่ว่างเพื่อทำรายการจอง</span>
      </div>
-     <div class="grid grid-cols-2 gap-4" id="rooms-grid"></div>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="rooms-grid"></div>
     </div>
    </section>
 
    <section id="page-mybookings" class="hidden">
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-     <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
+    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100">
+     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 pb-3 border-b border-gray-100 gap-3">
        <h2 class="font-bold text-lg text-[#166534] flex items-center gap-2">
-         <i data-lucide="clipboard-list" class="w-5 h-5"></i> รายการจองทั้งหมดในระบบ (Real-time)
+         <i data-lucide="clipboard-list" class="w-5 h-5"></i> รายการจองในระบบ
        </h2>
-       
-       <button id="btn-export-excel" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition hidden flex items-center gap-1.5">
-           <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> ดาวน์โหลดรายงาน Excel (.csv)
+       <button id="btn-export-excel" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition hidden items-center gap-1.5 w-fit">
+           <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> ดาวน์โหลดรายงาน
        </button>
      </div>
-
-     <div class="flex gap-3 flex-wrap mb-5 items-center bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-neutral-600">กรองห้อง:</span>
-        <select id="filter-room" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white font-medium outline-none" onchange="renderMyBookings()"> 
+     <div class="flex flex-col sm:flex-row gap-3 flex-wrap mb-5 items-start sm:items-center bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <span class="text-xs font-semibold text-neutral-600 w-12 sm:w-auto">กรองห้อง:</span>
+        <select id="filter-room" class="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white font-medium outline-none" onchange="renderMyBookings()"> 
           <option value="">ทุกห้องประชุม</option> 
         </select> 
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-neutral-600">วันที่:</span>
-        <input type="date" id="filter-date" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white font-medium outline-none" onchange="renderMyBookings()">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <span class="text-xs font-semibold text-neutral-600 w-12 sm:w-auto">วันที่:</span>
+        <input type="date" id="filter-date" class="flex-1 sm:flex-none border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white font-medium outline-none" onchange="renderMyBookings()">
       </div>
-      <button onclick="clearFilters()" class="text-xs bg-white hover:bg-gray-100 text-neutral-600 px-3 py-1.5 rounded-lg border border-gray-200 font-semibold transition">ล้างตัวกรอง</button>
+      <button onclick="clearFilters()" class="text-xs bg-white hover:bg-gray-100 text-neutral-600 px-4 py-1.5 rounded-lg border border-gray-200 font-semibold transition w-full sm:w-auto mt-2 sm:mt-0">ล้างตัวกรอง</button>
      </div>
-     
      <div id="mybookings-list" class="space-y-3"></div>
      <p id="mybookings-empty" class="text-neutral-400 text-center py-12 text-sm hidden">ยังไม่มีรายการจองในระบบ</p>
     </div>
    </section>
 
    <section id="page-stats" class="hidden">
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-6">
-      <div class="flex justify-between items-center flex-wrap gap-4 pb-4 border-b border-gray-100">
-        <div>
-          <h2 class="font-bold text-lg text-[#166534] flex items-center gap-2">
-            <i data-lucide="bar-chart-3" class="w-5 h-5"></i> สถิติและรายงานประจำวงรอบ
-          </h2>
-          <p class="text-xs text-neutral-500 mt-0.5">เลือกช่วงวันที่ต้องการออกรายงานเพื่อเสนอผู้บังคับบัญชา</p>
-        </div>
-        
-        <div class="flex items-center gap-2 flex-wrap bg-gray-50 p-2.5 rounded-2xl border border-gray-100 shadow-inner">
-          <div class="flex items-center gap-1.5 text-xs">
-            <span class="font-bold text-neutral-600">ตั้งแต่:</span>
-            <input type="date" id="stats-start-date" class="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs bg-white font-semibold outline-none" onchange="renderStats()">
+     <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 space-y-6">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-gray-100">
+        <h2 class="font-bold text-lg text-[#166534] flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i> สถิติและรายงาน
+        </h2>
+        <div class="flex items-center gap-2 flex-wrap bg-gray-50 p-2.5 rounded-2xl border border-gray-100 shadow-inner w-full lg:w-auto">
+          <input type="date" id="stats-start-date" class="border border-gray-200 rounded-xl px-2 py-1.5 text-xs bg-white font-semibold outline-none w-28 md:w-auto" onchange="renderStats()">
+          <span class="font-bold text-neutral-600 text-xs">ถึง</span>
+          <input type="date" id="stats-end-date" class="border border-gray-200 rounded-xl px-2 py-1.5 text-xs bg-white font-semibold outline-none w-28 md:w-auto" onchange="renderStats()">
+          <div class="w-full sm:w-auto flex gap-2 mt-2 sm:mt-0">
+            <button onclick="setStatsRange('thisMonth')" class="flex-1 text-[10px] md:text-xs bg-white border border-gray-200 hover:bg-gray-50 px-2 py-1.5 rounded-xl font-bold text-neutral-700 shadow-sm transition">เดือนนี้</button>
+            <button onclick="setStatsRange('lastMonth')" class="flex-1 text-[10px] md:text-xs bg-white border border-gray-200 hover:bg-gray-50 px-2 py-1.5 rounded-xl font-bold text-neutral-700 shadow-sm transition">เดือนที่แล้ว</button>
           </div>
-          <div class="flex items-center gap-1.5 text-xs">
-            <span class="font-bold text-neutral-600">ถึง:</span>
-            <input type="date" id="stats-end-date" class="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs bg-white font-semibold outline-none" onchange="renderStats()">
-          </div>
-          
-          <button onclick="setStatsRange('thisMonth')" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 px-2.5 py-1.5 rounded-xl font-bold text-neutral-700 shadow-sm transition">เดือนนี้</button>
-          <button onclick="setStatsRange('lastMonth')" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 px-2.5 py-1.5 rounded-xl font-bold text-neutral-700 shadow-sm transition">เดือนที่แล้ว</button>
-          <button onclick="setStatsRange('thisYear')" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 px-2.5 py-1.5 rounded-xl font-bold text-neutral-700 shadow-sm transition">ปีนี้</button>
-
-          <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition hidden flex items-center gap-1.5 ml-1">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> ดาวน์โหลดรายงาน (.csv)
-          </button>
         </div>
       </div>
-         
       <div id="stats-cards"></div>
-         
-      <div class="grid grid-cols-2 gap-6">
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <h4 class="font-bold text-sm mb-4 text-neutral-700 text-center flex items-center justify-center gap-1.5">
-            <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-700"></i> สัดส่วนการใช้ห้องประชุม (ช่วงเวลาที่เลือก)
-          </h4>
-          <div class="max-w-[240px] mx-auto w-full">
-            <canvas id="roomChart"></canvas>
-          </div>
-        </div>
-        
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <h4 id="utilization-table-title" class="font-bold text-sm mb-4 text-neutral-700 text-center flex items-center justify-center gap-1.5">
-            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-700"></i> อัตราการใช้ห้องประชุม (% Utilization)
-          </h4>
-          <div id="utilization-table-content" class="overflow-x-auto"></div>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between"><div class="max-w-[200px] md:max-w-[240px] mx-auto w-full"><canvas id="roomChart"></canvas></div></div>
+        <div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm"><div id="utilization-table-content" class="overflow-x-auto cal-scroll"></div></div>
       </div>
-
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div id="inventory-stats-content"></div>
         <div id="stats-content"></div>
       </div>
@@ -233,11 +210,11 @@
    </section>
   </main>
 
-  <div id="booking-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center hidden p-4">
-   <div class="bg-white rounded-3xl p-7 w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+  <div id="booking-modal" class="fixed inset-0 modal-overlay z-50 hidden items-center justify-center p-4">
+   <div class="bg-white rounded-3xl p-5 md:p-7 w-full max-w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 cal-scroll">
     <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
       <h3 class="font-bold text-lg text-[#166534] flex items-center gap-2">
-        <i data-lucide="calendar-plus" class="w-5 h-5"></i> ฟอร์มยืนยันรายละเอียดการจอง
+        <i data-lucide="calendar-plus" class="w-5 h-5"></i> ยืนยันการจอง
       </h3>
       <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition">
         <i data-lucide="x" class="w-4 h-4"></i>
@@ -255,862 +232,4 @@
      </div>
      
      <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3">
-      <label class="text-xs font-bold text-blue-900 block">📅 เลือกรูปแบบวันที่ต้องการจอง</label>
-      <div class="flex gap-6">
-        <label class="flex items-center gap-2 text-xs font-semibold text-neutral-700 cursor-pointer">
-          <input type="radio" name="booking_type" value="single" checked onclick="toggleMultiDayInput()" class="text-amber-500 focus:ring-amber-400 w-4 h-4">
-          <span>จองวันเดียว (ปกติ)</span>
-        </label>
-        <label class="flex items-center gap-2 text-xs font-semibold text-blue-800 cursor-pointer">
-          <input type="radio" name="booking_type" value="multiday" onclick="toggleMultiDayInput()" class="text-amber-500 focus:ring-amber-400 w-4 h-4">
-          <span>จองต่อเนื่องหลายวัน (อบรม/สัมมนา)</span>
-        </label>
-      </div>
-      
-      <div class="grid grid-cols-2 gap-3 pt-1">
-        <div>
-          <label class="text-[11px] text-neutral-500 font-semibold block mb-1">วันเริ่มจอง / เวลา:</label>
-          <input id="form-datetime" type="text" readonly class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white font-semibold text-neutral-800 outline-none">
-        </div>
-        <div id="end-date-wrapper" class="hidden">
-          <label class="text-[11px] text-blue-900 font-bold block mb-1" for="form-end-date">ถึงวันที่สิ้นสุด:</label>
-          <input id="form-end-date" type="date" class="w-full border border-blue-300 rounded-xl px-3 py-2 text-xs bg-white font-semibold text-neutral-800 focus:ring-2 focus:ring-blue-400 outline-none">
-        </div>
-      </div>
-     </div>
-
-     <div class="grid grid-cols-2 gap-3">
-        <div>
-         <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-name">ชื่อผู้จอง</label> 
-         <input id="form-name" type="text" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="ชื่อ-นามสกุล">
-        </div>
-        <div>
-         <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-phone">เบอร์โทรศัพท์</label> 
-         <input id="form-phone" type="tel" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="เบอร์โทรติดต่อ">
-        </div>
-     </div>
-     <div>
-      <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-purpose">วัตถุประสงค์ / ชื่อการประชุม</label> 
-      <input id="form-purpose" type="text" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="เช่น ประชุมหน่วยงานประจำสัปดาห์">
-     </div>
-     
-     <div>
-      <label class="text-xs font-bold text-neutral-800 block mb-1.5 flex items-center gap-1.5">
-        <i data-lucide="package" class="w-3.5 h-3.5 text-neutral-600"></i> เลือกยืมอุปกรณ์ส่วนกลางเพิ่มเติม (ตัดสต็อกตามช่วงเวลา)
-      </label>
-      <div id="inventory-list-container" class="space-y-1.5 border border-gray-200 rounded-2xl p-3 bg-gray-50/60 max-h-40 overflow-y-auto"></div>
-     </div>
-
-     <div>
-      <label class="text-xs font-bold text-neutral-800 block mb-1 flex items-center gap-1">
-        <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-600"></i> ตั้งรหัส PIN 4 หลัก (สำหรับยกเลิกการจองด้วยตัวเอง)
-      </label>
-      <input id="form-pin" type="text" required maxlength="4" pattern="[0-9]{4}" class="w-36 border border-amber-300 rounded-xl px-3.5 py-2 text-sm font-bold tracking-widest bg-amber-50/60 text-center outline-none focus:ring-2 focus:ring-amber-400" placeholder="0000" title="กรุณากรอกตัวเลข 4 หลัก">
-      <span class="text-[11px] text-neutral-400 ml-2">*(กรุณาจดจำรหัสนี้ไว้ใช้ในภายหลัง)*</span>
-     </div>
-
-     <div class="flex gap-3 pt-4 border-t border-gray-100">
-      <button id="submit-btn" type="submit" class="flex-1 py-3 rounded-xl font-bold text-sm bg-amber-400 hover:bg-amber-500 text-neutral-900 shadow-sm transition flex items-center justify-center gap-1.5">
-        <i data-lucide="check-circle-2" class="w-4 h-4"></i> ยืนยันการจอง
-      </button> 
-      <button type="button" onclick="closeModal()" class="px-5 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-neutral-600 hover:bg-gray-50 transition">ยกเลิก</button>
-     </div>
-    </form>
-   </div>
-  </div>
-
-  <script>
-    function sendLineNotification(textMessage) {
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_IPXcMgazC_kY51WV2PtMLe2HMfQ92KWafb4OssfIe2PvJg9uTqPNsKMgncqWq1mnOA/exec";
-        fetch(WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: textMessage })
-        }).catch(err => console.error("LINE Notification Error:", err));
-    }
-
-    const ROOMS = [
-        'ห้องประชุม VIP ชั้น 1',
-        'ห้องประชุม 1 ชั้น 2',
-        'ห้องประชุม 2 ชั้น 2',
-        'ห้องประชุม 3 ชั้น 3',
-        'ห้องประชุมชั้น 6'
-    ];
-
-    const ROOM_FIXED_EQUIPMENT = {
-        'ห้องประชุม VIP ชั้น 1': 'ทีวี 1 เครื่อง',
-        'ห้องประชุม 1 ชั้น 2': 'โปรเจกเตอร์ 1 เครื่อง',
-        'ห้องประชุม 2 ชั้น 2': 'ทีวี 4 จอ, โปรเจกเตอร์ 1 เครื่อง, ปลั๊กพ่วง 1 อัน, ไมค์ติดโต๊ะ',
-        'ห้องประชุม 3 ชั้น 3': 'โปรเจกเตอร์ 1 เครื่อง, อินเตอร์เน็ต',
-        'ห้องประชุมชั้น 6': 'สมาร์ททีวี 1 เครื่อง, อินเตอร์เน็ต'
-    };
-
-    const SHARED_INVENTORY = [
-        { id: 'wireless_mic', name: 'ไมค์ลอย', total: 1 },
-        { id: 'wired_mic', name: 'ไมค์สาย', total: 2 },
-        { id: 'laptop', name: 'โน้ตบุ๊ค', total: 1 },
-        { id: 'lan_adapter', name: 'อุปกรณ์ต่อสายอินเตอร์เน็ตสำหรับโน้ตบุ๊ค', total: 1 },
-        { id: 'printer', name: 'เครื่องปิ้งเอกสาร', total: 1 },
-        { id: 'hdmi_cable', name: 'สาย HDMI', total: 1 }
-    ];
-
-    let allBookings = [];
-    let selectedDate = new Date();
-    let calMonth = new Date();
-    let selectedRoom = null;
-    let isAdmin = false;
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyC92wvC7DJJ8fTa0LQ5EB_xFECxqNXbbAc",
-      authDomain: "chulachomklao-meeting-room.firebaseapp.com",
-      projectId: "chulachomklao-meeting-room",
-      storageBucket: "chulachomklao-meeting-room.firebasestorage.app",
-      messagingSenderId: "195363949472",
-      appId: "1:195363949472:web:6da4bc5cd023d12023b2c5"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const firestoreDb = firebase.firestore();
-
-    const db = {
-        load() {
-            firestoreDb.collection("bookings").onSnapshot((snapshot) => {
-                allBookings = [];
-                snapshot.forEach((doc) => {
-                    let data = doc.data();
-                    data.__backendId = doc.id;
-                    allBookings.push(data);
-                });
-                this.refreshAll();
-            }, (error) => {
-                console.error("Firebase Snapshot Error: ", error);
-            });
-        },
-        save(record, callback) {
-            firestoreDb.collection("bookings").add(record)
-                .then(() => { if(callback) callback(true); })
-                .catch((error) => { alert("บันทึกไม่สำเร็จ: " + error); if(callback) callback(false); });
-        },
-        update(updatedRecord) {
-            const id = updatedRecord.__backendId;
-            const dataToUpdate = { ...updatedRecord };
-            delete dataToUpdate.__backendId;
-            firestoreDb.collection("bookings").doc(id).update(dataToUpdate)
-                .catch((error) => { alert("เกิดข้อผิดพลาดในการยกเลิก: " + error); });
-        },
-        refreshAll() {
-            renderRooms();
-            showDateBookings();
-            renderCalendar(); 
-            if (!document.getElementById('page-mybookings').classList.contains('hidden')) renderMyBookings();
-            if (!document.getElementById('page-stats').classList.contains('hidden')) renderStats();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-    };
-
-    function populateTimes() {
-        const s = document.getElementById('start-time');
-        const e = document.getElementById('end-time');
-        s.innerHTML = ''; e.innerHTML = '';
-        for (let h = 7; h <= 18; h++) {
-            for (let m = 0; m < 60; m += 30) {
-                if (h === 18 && m > 0) continue;
-                const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-                s.innerHTML += `<option value="${t}">${t}</option>`;
-                e.innerHTML += `<option value="${t}">${t}</option>`;
-            }
-        }
-        s.value = '09:00'; e.value = '10:00';
-        s.onchange = e.onchange = () => { handleTimeChange(); };
-    }
-
-    function handleTimeChange() {
-        const st = document.getElementById('start-time').value;
-        const et = document.getElementById('end-time').value;
-        const errLabel = document.getElementById('time-error');
-        if(st >= et) errLabel.classList.remove('hidden');
-        else errLabel.classList.add('hidden');
-        renderRooms(); 
-        showDateBookings();
-    }
-
-    function populateFilterRooms() {
-        const filterRoom = document.getElementById('filter-room');
-        if (!filterRoom) return;
-        filterRoom.innerHTML = '<option value="">ทุกห้องประชุม</option>';
-        ROOMS.forEach((r) => { filterRoom.innerHTML += `<option value="${r}">${r}</option>`; });
-    }
-
-    function initStatsDates() {
-        const startInput = document.getElementById('stats-start-date');
-        const endInput = document.getElementById('stats-end-date');
-        if (!startInput || !endInput) return;
-        const now = new Date();
-        startInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
-        endInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-    }
-
-    function setStatsRange(type) {
-        const now = new Date();
-        const startInput = document.getElementById('stats-start-date');
-        const endInput = document.getElementById('stats-end-date');
-        if (type === 'thisMonth') {
-            startInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
-            endInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-        } else if (type === 'lastMonth') {
-            startInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-            endInput.value = getDateStr(new Date(now.getFullYear(), now.getMonth(), 0));
-        } else if (type === 'thisYear') {
-            startInput.value = `${now.getFullYear()}-01-01`;
-            endInput.value = `${now.getFullYear()}-12-31`;
-        }
-        renderStats();
-    }
-
-    function toggleAdminMode() {
-        if (isAdmin) {
-            if(confirm('🔒 ต้องการออกจากระบบผู้ดูแลระบบใช่หรือไม่?')) {
-                isAdmin = false;
-                updateAdminUI();
-            }
-            return;
-        }
-        const _0x4f2a = ["\x43\x52\x4d\x41\x31\x31\x34\x39\x31"];
-        const inputPass = prompt("👑 กรุณากรอกรหัสผ่านสำหรับผู้ดูแลระบบ:");
-        if (inputPass === null) return;
-        if (inputPass === _0x4f2a[0]) {
-            isAdmin = true;
-            alert("✅ เข้าสู่ระบบผู้ดูแลเรียบร้อยแล้ว!");
-            updateAdminUI();
-        } else {
-            alert("❌ รหัสผ่านไม่ถูกต้อง!");
-        }
-    }
-
-    function updateAdminUI() {
-        const btnToggle = document.getElementById('btn-admin-toggle');
-        const banner = document.getElementById('admin-banner');
-        const btnExcel1 = document.getElementById('btn-export-excel');
-        const btnExcel2 = document.getElementById('btn-export-excel-stats');
-
-        if (isAdmin) {
-            btnToggle.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i> แอดมิน (ออก)`;
-            btnToggle.classList.replace('bg-white/20', 'bg-amber-500');
-            btnToggle.classList.replace('text-white', 'text-neutral-900');
-            banner.classList.remove('hidden');
-            if (btnExcel1) btnExcel1.classList.remove('hidden');
-            if (btnExcel2) btnExcel2.classList.remove('hidden');
-        } else {
-            btnToggle.innerHTML = `<i data-lucide="shield" class="w-3.5 h-3.5"></i> แอดมิน`;
-            btnToggle.classList.replace('bg-amber-500', 'bg-white/20');
-            btnToggle.classList.replace('text-neutral-900', 'text-white');
-            banner.classList.add('hidden');
-            if (btnExcel1) btnExcel1.classList.add('hidden');
-            if (btnExcel2) btnExcel2.classList.add('hidden');
-        }
-        renderMyBookings();
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function toggleMultiDayInput() {
-        const isMultiDay = document.querySelector('input[name="booking_type"]:checked').value === 'multiday';
-        const wrapper = document.getElementById('end-date-wrapper');
-        const inputEndDate = document.getElementById('form-end-date');
-        if (isMultiDay) {
-            wrapper.classList.remove('hidden');
-            inputEndDate.required = true;
-            const tomorrow = new Date(selectedDate);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            inputEndDate.value = getDateStr(tomorrow);
-            inputEndDate.min = getDateStr(selectedDate);
-        } else {
-            wrapper.classList.add('hidden');
-            inputEndDate.required = false;
-        }
-    }
-
-    function getDateRangeArray(startDateStr, endDateStr) {
-        const dateArray = [];
-        let currentDate = new Date(startDateStr + 'T00:00:00');
-        const stopDate = new Date(endDateStr + 'T00:00:00');
-        while (currentDate <= stopDate) {
-            dateArray.push(getDateStr(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        return dateArray;
-    }
-
-    function renderCalendar() {
-        const grid = document.getElementById('cal-grid');
-        const y = calMonth.getFullYear(), m = calMonth.getMonth();
-        const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-        document.getElementById('cal-month-label').textContent = `${thMonths[m]} ${y + 543}`;
-        const first = new Date(y, m, 1).getDay();
-        const days = new Date(y, m + 1, 0).getDate();
-        const today = new Date();
-        let html = '';
-        
-        for (let i = 0; i < first; i++) html += '<div></div>';
-        
-        const roomColors = {
-            'ห้องประชุม VIP ชั้น 1': { bg: '#fef08a', text: '#854d0e', short: 'VIP' },
-            'ห้องประชุม 1 ชั้น 2':   { bg: '#fbcfe8', text: '#9d174d', short: 'ห้อง 1' },
-            'ห้องประชุม 2 ชั้น 2':   { bg: '#d1fae5', text: '#065f46', short: 'ห้อง 2' },
-            'ห้องประชุม 3 ชั้น 3':   { bg: '#ffedd5', text: '#9a3412', short: 'ห้อง 3' },
-            'ห้องประชุมชั้น 6':      { bg: '#f3e8ff', text: '#6b21a8', short: 'ชั้น 6' }
-        };
-        
-        for (let d = 1; d <= days; d++) {
-            const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
-            const isSel = selectedDate.getFullYear()===y && selectedDate.getMonth()===m && selectedDate.getDate()===d;
-            
-            const dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
-            
-            // แสดงรายการแบบรองรับการเลื่อน (Scrollable) หากมีหลายรายการ
-            const maxVisible = 2;
-            const visibleBookings = dayBookings.slice(0, maxVisible);
-            const hiddenCount = dayBookings.length - maxVisible;
-
-            const bookingsHtml = visibleBookings.map(b => {
-                const c = roomColors[b.room_name] || { bg: '#e5e7eb', text: '#1f2937', short: 'ห้อง' };
-                return `
-                    <div class="text-[9px] rounded px-1 py-0.5 mt-0.5 text-left font-semibold truncate shadow-2xs" 
-                           style="background-color: ${c.bg}; color: ${c.text};"
-                           title="[${b.room_name}] ${b.start_time}-${b.end_time} | ${b.purpose} (โดย: ${b.booker_name})">
-                          <span class="font-bold">[${c.short}]</span> ${b.start_time} ${b.purpose}
-                    </div>
-                `;
-            }).join('');
-
-            const moreHtml = hiddenCount > 0 ? `<div class="text-[9px] font-bold text-center text-amber-700 bg-amber-50 rounded mt-0.5">+{${hiddenCount}} รายการ (คลิกดูเพิ่ม)</div>` : '';
-
-            let dayNumClass = 'w-7 h-7 flex items-center justify-center text-xs mx-auto hover:bg-emerald-50 rounded-xl font-bold transition';
-            if (isSel) dayNumClass += ' cal-selected';
-            else if (isToday) dayNumClass += ' cal-today';
-
-            html += `
-                <div class="border border-gray-100 p-1 min-h-[90px] bg-white rounded-2xl flex flex-col justify-between cursor-pointer hover:border-emerald-200 transition shadow-2xs" onclick="selectDate('${dateStr}')">
-                    <span class="${dayNumClass}">${d}</span>
-                    <div class="w-full mt-1 flex-grow flex flex-col gap-0.5 overflow-y-auto cal-scroll max-h-[55px]">
-                        ${bookingsHtml}
-                        ${moreHtml}
-                    </div>
-                </div>
-            `;
-        }
-        grid.innerHTML = html;
-    }
-
-    function changeMonth(dir) { calMonth.setMonth(calMonth.getMonth() + dir); renderCalendar(); }
-
-    function selectDate(str) {
-        selectedDate = new Date(str + 'T00:00:00');
-        renderCalendar(); renderRooms(); showDateBookings();
-    }
-
-    function getDateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
-    function showDateBookings() {
-        const panel = document.getElementById('date-bookings-panel');
-        const list = document.getElementById('date-bookings-list');
-        const ds = getDateStr(selectedDate);
-        const bookings = allBookings.filter(b => b.date === ds && b.status === 'active');
-        if (bookings.length === 0) { panel.classList.add('hidden'); return; }
-        panel.classList.remove('hidden');
-        list.innerHTML = bookings.map(b => `
-            <div class="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-2xs border border-amber-200/60 flex items-center justify-between">
-                <div>🕐 <strong class="text-amber-950">${b.start_time} - ${b.end_time}</strong> | <span class="text-emerald-800 font-bold">${b.room_name}</span></div>
-                <div class="text-neutral-700 font-semibold truncate ml-2">📌 ${b.purpose} (${b.booker_name})</div>
-            </div>
-        `).join('');
-    }
-
-    function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
-
-    function renderRooms() {
-        const grid = document.getElementById('rooms-grid');
-        const ds = getDateStr(selectedDate);
-        const st = document.getElementById('start-time').value;
-        const et = document.getElementById('end-time').value;
-        
-        const isTimeInvalid = st >= et;
-        const todayObj = new Date();
-        const todayStr = getDateStr(todayObj);
-        const isPastDate = ds < todayStr;
-        
-        grid.innerHTML = ROOMS.map(room => {
-            let booked = false;
-            if(!isTimeInvalid) {
-                booked = allBookings.some(b => b.room_name === room && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
-            }
-            
-            const avail = !booked && !isTimeInvalid && !isPastDate;
-            
-            let statusBadge = '<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ว่าง (คลิกจอง)</span>';
-            if (isPastDate) statusBadge = '<span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full text-xs font-semibold">❌ ไม่สามารถจองย้อนหลัง</span>';
-            else if (isTimeInvalid) statusBadge = '<span class="bg-red-100 text-red-600 px-2.5 py-1 rounded-full text-xs font-semibold">⚠️ ช่วงเวลาไม่ถูกต้อง</span>';
-            else if (booked) statusBadge = '<span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold">🔴 ไม่ว่าง (ถูกจองแล้ว)</span>';
-
-            let suggestionHtml = '';
-            if (booked && !isTimeInvalid && !isPastDate) {
-                const availableAlternativeRooms = ROOMS.filter(r => {
-                    if (r === room) return false;
-                    return !allBookings.some(b => b.room_name === r && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
-                });
-
-                if (availableAlternativeRooms.length > 0) {
-                    suggestionHtml = `<div class="mt-3 pt-3 border-t border-red-100 text-xs text-blue-900">
-                        <span class="font-bold">💡 ห้องว่างช่วงเวลานี้:</span><br>
-                        <div class="flex flex-wrap gap-1.5 mt-1">
-                        ${availableAlternativeRooms.map(altRoom => 
-                            `<button type="button" class="bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 rounded-lg px-2 py-1 font-bold shadow-2xs transition" onclick="event.stopPropagation(); openBooking('${altRoom}')">👉 ${altRoom}</button>`
-                        .join(' '))}
-                        </div>
-                    </div>`;
-                }
-            }
-
-            return `<div class="room-card border rounded-2xl p-5 bg-white shadow-sm flex flex-col justify-between ${avail ? 'border-emerald-200 hover:border-emerald-400 cursor-pointer bg-gradient-to-br from-white to-emerald-50/20' : 'border-gray-200/80 bg-gray-50/50 opacity-90'}" onclick="${avail ? `openBooking('${room}')` : ''}">
-                <div>
-                  <div class="flex items-start justify-between gap-2 mb-2">
-                    <h4 class="font-bold text-base text-neutral-900">${room}</h4>
-                    ${statusBadge}
-                  </div>
-                  <p class="text-xs text-neutral-500 font-medium">📌 อุปกรณ์ประจำห้อง: <span class="text-neutral-700">${ROOM_FIXED_EQUIPMENT[room]}</span></p>
-                </div>
-                ${suggestionHtml}
-            </div>`;
-        }).join('');
-    }
-
-    function renderInventoryCheckboxes(dateStr, startTime, endTime) {
-        const container = document.getElementById('inventory-list-container');
-        const overlappingBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active' && isOverlap(startTime, endTime, b.start_time, b.end_time));
-
-        const usedCount = {};
-        overlappingBookings.forEach(b => {
-            if (b.borrowed_items && Array.isArray(b.borrowed_items)) {
-                b.borrowed_items.forEach(itemId => { usedCount[itemId] = (usedCount[itemId] || 0) + 1; });
-            }
-        });
-
-        container.innerHTML = SHARED_INVENTORY.map(item => {
-            const borrowed = usedCount[item.id] || 0;
-            const available = item.total - borrowed;
-            const isOutOfStock = available <= 0;
-
-            return `
-                <label class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white border border-gray-100 transition cursor-pointer ${isOutOfStock ? 'opacity-50 cursor-not-allowed text-red-700 bg-red-50/30' : 'text-neutral-700 hover:border-emerald-200'}">
-                    <div class="flex items-center gap-2.5">
-                        <input type="checkbox" name="inventory_item" value="${item.id}" ${isOutOfStock ? 'disabled' : ''} class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                        <span class="font-bold">${item.name}</span>
-                    </div>
-                    <span class="font-bold ${isOutOfStock ? 'text-red-600' : 'text-emerald-700'}">
-                        ${isOutOfStock ? '❌ (หมดสต็อก)' : '(ว่าง: ' + available + '/' + item.total + ')'}
-                    </span>
-                </label>
-            `;
-        }).join('');
-    }
-
-    function openBooking(room) {
-        selectedRoom = room;
-        document.getElementById('form-room').value = room;
-        document.getElementById('fixed-eq-text').textContent = ROOM_FIXED_EQUIPMENT[room] || 'ไม่มีอุปกรณ์ประจำห้องพิเศษ';
-
-        const ds = getDateStr(selectedDate);
-        const st = document.getElementById('start-time').value;
-        const et = document.getElementById('end-time').value;
-        
-        document.querySelector('input[name="booking_type"][value="single"]').checked = true;
-        toggleMultiDayInput();
-
-        document.getElementById('form-datetime').value = `${ds} | ${st} - ${et}`;
-        document.getElementById('form-name').value = '';
-        document.getElementById('form-phone').value = '';
-        document.getElementById('form-purpose').value = '';
-        document.getElementById('form-pin').value = '';
-        
-        renderInventoryCheckboxes(ds, st, et);
-        document.getElementById('booking-modal').classList.remove('hidden');
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-    
-    function closeModal() { document.getElementById('booking-modal').classList.add('hidden'); }
-
-    document.getElementById('booking-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        
-        const st = document.getElementById('start-time').value;
-        const et = document.getElementById('end-time').value;
-        const isMultiDay = document.querySelector('input[name="booking_type"]:checked').value === 'multiday';
-        
-        let targetDates = [];
-        if (isMultiDay) {
-            const startDateStr = getDateStr(selectedDate);
-            const endDateStr = document.getElementById('form-end-date').value;
-            if (endDateStr <= startDateStr) {
-                alert("❌ 'ถึงวันที่' ต้องเป็นวันถัดจากวันเริ่มจองครับ");
-                return;
-            }
-            targetDates = getDateRangeArray(startDateStr, endDateStr);
-            if (targetDates.length > 14) {
-                alert("⚠️ อนุญาตให้จองต่อเนื่องสูงสุดไม่เกิน 14 วันต่อครั้งครับ");
-                return;
-            }
-        } else {
-            targetDates = [getDateStr(selectedDate)];
-        }
-
-        let conflictDate = null;
-        for (const ds of targetDates) {
-            const isBooked = allBookings.some(b => b.room_name === selectedRoom && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
-            if (isBooked) { conflictDate = ds; break; }
-        }
-
-        if (conflictDate) {
-            alert(`❌ ไม่สามารถจองต่อเนื่องได้ เนื่องจากวันที่ ${conflictDate} มีผู้จองแล้ว`);
-            return;
-        }
-
-        const checkedBoxes = document.querySelectorAll('input[name="inventory_item"]:checked');
-        const borrowedIds = Array.from(checkedBoxes).map(cb => cb.value);
-        const borrowedNames = borrowedIds.map(id => {
-            const found = SHARED_INVENTORY.find(item => item.id === id);
-            return found ? found.name : '';
-        }).filter(Boolean);
-
-        const submitBtn = document.getElementById('submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "กำลังบันทึกข้อมูล...";
-
-        let savedCount = 0;
-        targetDates.forEach((ds) => {
-            const record = {
-                room_name: selectedRoom,
-                booker_name: document.getElementById('form-name').value.trim(),
-                phone: document.getElementById('form-phone').value.trim(),
-                purpose: document.getElementById('form-purpose').value.trim() + (isMultiDay ? ` (จองต่อเนื่อง ${targetDates.length} วัน)` : ''),
-                equipment: borrowedNames.join(', '),
-                borrowed_items: borrowedIds,
-                pin_code: document.getElementById('form-pin').value.trim(),
-                date: ds,
-                start_time: st,
-                end_time: et,
-                status: 'active'
-            };
-
-            db.save(record, (success) => {
-                if (success) {
-                    savedCount++;
-                    if (savedCount === targetDates.length) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i data-lucide="check-circle-2" class="w-4 h-4"></i> ยืนยันการจอง';
-                        
-                        const lineMsg = `📢 แจ้งเตือนการจองห้องประชุม\n\n` +
-                                        `🏢 ห้อง: ${selectedRoom}\n` +
-                                        `👤 ผู้จอง: ${record.booker_name} (📞 ${record.phone})\n` +
-                                        `📅 วันที่: ${targetDates.join(', ')}\n` +
-                                        `⏰ เวลา: ${st} - ${et}\n` +
-                                        `📝 วัตถุประสงค์: ${document.getElementById('form-purpose').value.trim()}` +
-                                        `${borrowedNames.length > 0 ? `\n📦 อุปกรณ์เสริม: ${borrowedNames.join(', ')}` : ''}`;
-                        
-                        sendLineNotification(lineMsg);
-                        closeModal();
-                        alert(`🎉 บันทึกการจองสำเร็จทั้ง ${targetDates.length} วันเรียบร้อยครับ!`);
-                    }
-                }
-            });
-        });
-    });
-
-    function showPage(page) {
-        ['home','mybookings','stats'].forEach(p => {
-            document.getElementById('page-'+p).classList.toggle('hidden', p!==page);
-            document.getElementById('tab-'+p).classList.toggle('tab-active', p===page);
-            document.getElementById('tab-'+p).classList.toggle('text-white/90', p!==page);
-        });
-        if (page==='mybookings') {
-            document.getElementById('filter-date').value = getDateStr(selectedDate);
-            renderMyBookings();
-        }
-        if (page==='stats') {
-            if (!document.getElementById('stats-start-date').value) initStatsDates();
-            renderStats();
-        }
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function renderMyBookings() {
-        const list = document.getElementById('mybookings-list');
-        const empty = document.getElementById('mybookings-empty');
-        const roomF = document.getElementById('filter-room').value;
-        const dateF = document.getElementById('filter-date').value;
-        
-        let filtered = allBookings.filter(b => b.status === 'active');
-        if (roomF) filtered = filtered.filter(b => b.room_name === roomF);
-        if (dateF) filtered = filtered.filter(b => b.date === dateF);
-        
-        filtered.sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
-
-        if (filtered.length === 0) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
-        empty.classList.add('hidden');
-        
-        list.innerHTML = filtered.map(b => `
-            <div class="border border-gray-100 rounded-2xl p-4 flex justify-between items-center bg-gray-50/60 shadow-2xs hover:bg-white transition ${isAdmin ? 'border-amber-200 bg-amber-50/20' : ''}">
-                <div class="text-xs text-neutral-700 space-y-1">
-                    <div><strong class="text-sm text-neutral-900">${b.booker_name}</strong> <span class="text-neutral-500">(📞 ${b.phone})</span> — <span class="text-emerald-700 font-bold">${b.room_name}</span></div>
-                    <div class="text-neutral-600 font-medium">📅 วันที่: ${b.date} | 🕐 เวลา: ${b.start_time} - ${b.end_time}</div>
-                    <div class="text-neutral-400">วัตถุประสงค์: ${b.purpose} ${b.equipment ? `| อุปกรณ์เสริม: ${b.equipment}` : ''}</div>
-                </div>
-                <div>
-                    <button onclick="cancelBooking('${b.__backendId}')" 
-                            class="text-xs ${isAdmin ? 'bg-amber-400 hover:bg-amber-500 text-neutral-900' : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/60'} px-3.5 py-2 rounded-xl font-bold shadow-2xs transition flex items-center gap-1">
-                        ${isAdmin ? '👑 ยกเลิก (Admin)' : '❌ ยกเลิกการจอง'}
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function clearFilters() {
-        document.getElementById('filter-room').value = "";
-        document.getElementById('filter-date').value = "";
-        renderMyBookings();
-    }
-
-    function cancelBooking(id) {
-        const rec = allBookings.find(b => b.__backendId === id);
-        if (!rec) return;
-
-        if (isAdmin) {
-            if (confirm(`👑 [แอดมิน]\nต้องการยกเลิกการจองห้อง "${rec.room_name}" ของคุณ "${rec.booker_name}" ใช่หรือไม่?`)) {
-                db.update({ ...rec, status: 'cancelled' });
-            }
-            return;
-        }
-
-        const inputVerify = prompt(`🔐 กรุณากรอก "รหัส PIN 4 หลัก" หรือ "เบอร์โทรศัพท์" เพื่อยืนยันการยกเลิก:`);
-        if (inputVerify === null) return;
-
-        if (inputVerify.trim() === rec.pin_code || inputVerify.trim() === rec.phone) {
-            if (confirm('🚨 ยืนยันการยกเลิกห้องประชุมนี้ใช่หรือไม่?')) {
-                db.update({ ...rec, status: 'cancelled' });
-            }
-        } else {
-            alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!');
-        }
-    }
-
-    let roomChartInstance = null;
-
-    function getHoursBetween(st, et) {
-        const [sh, sm] = st.split(':').map(Number);
-        const [eh, em] = et.split(':').map(Number);
-        return (eh + em/60) - (sh + sm/60);
-    }
-
-    function renderStats() {
-        const startDateStr = document.getElementById('stats-start-date').value;
-        const endDateStr = document.getElementById('stats-end-date').value;
-
-        const active = allBookings.filter(b => b.status === 'active');
-        const rangeBookings = active.filter(b => {
-            if (!startDateStr || !endDateStr) return true;
-            return b.date >= startDateStr && b.date <= endDateStr;
-        });
-
-        const total = rangeBookings.length;
-        const roomCounts = {};
-        const hourCounts = {};
-        const inventoryCounts = {};
-        SHARED_INVENTORY.forEach(i => inventoryCounts[i.name] = 0);
-
-        rangeBookings.forEach(b => {
-            roomCounts[b.room_name] = (roomCounts[b.room_name]||0) + 1;
-            const h = b.start_time?.split(':')[0];
-            if (h) hourCounts[h] = (hourCounts[h]||0) + 1;
-
-            if (b.borrowed_items && Array.isArray(b.borrowed_items)) {
-                b.borrowed_items.forEach(itemId => {
-                    const found = SHARED_INVENTORY.find(i => i.id === itemId);
-                    if (found) inventoryCounts[found.name] = (inventoryCounts[found.name]||0) + 1;
-                });
-            }
-        });
-
-        const topRoom = Object.entries(roomCounts).sort((a,b)=>b[1]-a[1])[0];
-        const topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
-
-        let totalDaysInRange = 1;
-        if (startDateStr && endDateStr) {
-            const d1 = new Date(startDateStr);
-            const d2 = new Date(endDateStr);
-            totalDaysInRange = Math.max(1, Math.round((d2 - d1)/(1000*60*60*24)) + 1);
-        }
-        const totalAvailableHoursPerRoom = totalDaysInRange * 11;
-
-        document.getElementById('stats-cards').innerHTML = `
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100 shadow-2xs"><div class="text-2xl font-bold text-emerald-700">${total}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">การจองในช่วงที่เลือก</div></div>
-                <div class="bg-amber-50/60 rounded-2xl p-4 text-center border border-amber-100 shadow-2xs"><div class="text-base font-bold text-amber-800 truncate px-1">${topRoom?topRoom[0]:'—'}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">ห้องยอดฮิตประจำรอบ</div></div>
-                <div class="bg-blue-50/60 rounded-2xl p-4 text-center border border-blue-100 shadow-2xs"><div class="text-base font-bold text-blue-800">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">ช่วงเวลายอดนิยม</div></div>
-            </div>`;
-
-        let utilizationCells = ROOMS.map(r => {
-            const roomBookings = rangeBookings.filter(b => b.room_name === r);
-            let totalHoursUsed = 0;
-            roomBookings.forEach(b => { totalHoursUsed += getHoursBetween(b.start_time, b.end_time); });
-            const percent = Math.min(100, ((totalHoursUsed / totalAvailableHoursPerRoom) * 100)).toFixed(1);
-            return `
-                <tr class="border-b border-gray-100 text-xs">
-                    <td class="py-2 font-semibold text-neutral-700">${r}</td>
-                    <td class="py-2 text-right text-neutral-500 font-medium">${totalHoursUsed.toFixed(1)} ชม.</td>
-                    <td class="py-2 text-right font-bold text-emerald-700">${percent}%</td>
-                </tr>
-            `;
-        }).join('');
-
-        document.getElementById('utilization-table-title').innerHTML = `<i data-lucide="trending-up" class="w-4 h-4 text-emerald-700"></i> อัตราการใช้ห้อง (% Utilization) — (${totalDaysInRange} วัน)`;
-        document.getElementById('utilization-table-content').innerHTML = `
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold">
-                        <th class="pb-2">ห้องประชุม</th>
-                        <th class="pb-2 text-right">เวลาใช้รวม</th>
-                        <th class="pb-2 text-right">% อัตราการใช้</th>
-                    </tr>
-                </thead>
-                <tbody>${utilizationCells}</tbody>
-            </table>`;
-
-        let inventoryCells = Object.entries(inventoryCounts).map(([itemName, count]) => `
-            <tr class="border-b border-gray-100 text-xs">
-                <td class="py-2 font-semibold text-neutral-700">📦 ${itemName}</td>
-                <td class="py-2 text-right font-bold text-indigo-600">${count} ครั้ง</td>
-            </tr>
-        `).join('');
-
-        document.getElementById('inventory-stats-content').innerHTML = `
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                <h4 class="font-bold text-sm mb-3 text-indigo-900 flex items-center gap-1.5">
-                    <i data-lucide="package-open" class="w-4 h-4 text-indigo-700"></i> สรุปสถิติการยืมอุปกรณ์เสริม
-                </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold">
-                                <th class="pb-2">รายการอุปกรณ์</th>
-                                <th class="pb-2 text-right">ยืมใช้งาน</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">${inventoryCells}</tbody>
-                    </table>
-                </div>
-            </div>`;
-
-        document.getElementById('stats-content').innerHTML = `
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                <h4 class="font-bold text-sm mb-3 text-neutral-800 flex items-center gap-1.5">
-                    <i data-lucide="building" class="w-4 h-4 text-emerald-700"></i> สรุปจำนวนครั้งแยกตามห้องประชุม
-                </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold">
-                                <th class="pb-2">ชื่อห้องประชุม</th>
-                                <th class="pb-2 text-right">จำนวนการใช้งาน</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-xs">
-                            ${ROOMS.map(r => `
-                                <tr class="hover:bg-gray-50/80 transition">
-                                    <td class="py-2 font-medium text-neutral-800">${r}</td>
-                                    <td class="py-2 text-right font-bold text-emerald-700">${roomCounts[r]||0} ครั้ง</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>`;
-
-        if (roomChartInstance) roomChartInstance.destroy();
-        const roomDataData = ROOMS.map(r => roomCounts[r] || 0);
-        const ctxRoom = document.getElementById('roomChart').getContext('2d');
-        
-        roomChartInstance = new Chart(ctxRoom, {
-            type: 'doughnut',
-            data: {
-                labels: ROOMS.map(r => r.replace('ห้องประชุม ', '')), 
-                datasets: [{
-                    data: roomDataData,
-                    backgroundColor: ['#fef08a', '#fbcfe8', '#d1fae5', '#ffedd5', '#f3e8ff'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { 
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { boxWidth: 10, font: { size: 11, family: 'DM Sans' } } 
-                    } 
-                }
-            }
-        });
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function init() {
-        populateTimes();
-        populateFilterRooms();
-        const filterDateInput = document.getElementById('filter-date');
-        if (filterDateInput) filterDateInput.value = getDateStr(new Date());
-        db.load(); 
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-    window.onload = init;
-
-    function exportToExcel() {
-        if (!isAdmin) {
-            alert("❌ สิทธิ์ไม่เพียงพอ! กรุณาเข้าสู่ระบบผู้ดูแลระบบ (Admin Mode) ก่อนดาวน์โหลดรายงาน");
-            return;
-        }
-        if (allBookings.length === 0) { alert('ไม่มีข้อมูลรายการจอง'); return; }
-        
-        const startDateStr = document.getElementById('stats-start-date').value;
-        const endDateStr = document.getElementById('stats-end-date').value;
-
-        let activeBookings = allBookings.filter(b => b.status === 'active');
-        if (startDateStr && endDateStr) {
-            activeBookings = activeBookings.filter(b => b.date >= startDateStr && b.date <= endDateStr);
-        }
-
-        if (activeBookings.length === 0) {
-            alert('⚠️ ไม่พบข้อมูลการจองในช่วงวันที่คุณเลือก');
-            return;
-        }
-        
-        let csvContent = "\uFEFF"; 
-        csvContent += "วันที่,เวลาเริ่ม,เวลาสิ้นสุด,ห้องประชุม,ชื่อผู้จอง,เบอร์โทร,วัตถุประสงค์,อุปกรณ์,สถานะ\n";
-        
-        activeBookings.sort((a,b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
-        activeBookings.forEach(b => {
-            let row = `"${b.date}","${b.start_time}","${b.end_time}","${b.room_name}","${b.booker_name}","${b.phone}","${b.purpose}","${b.equipment}","${b.status}"`;
-            csvContent += row + "\n";
-        });
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `รายงานรอบ_${startDateStr}_ถึง_${endDateStr}_รพ_รร_จปร.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-  </script>
-</body>
-</html>
+      <label class="text-xs font-bold text-blue-900 block">
