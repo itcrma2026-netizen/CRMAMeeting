@@ -508,7 +508,7 @@
 
     function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
 
-   function renderRooms() {
+  function renderRooms() {
         const grid = document.getElementById('rooms-grid');
         const ds = getDateStr(selectedDate);
         const st = document.getElementById('start-time').value;
@@ -528,7 +528,6 @@
                 booked = allBookings.some(b => b.room_name === room && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
             }
             
-            // เงื่อนไขความพร้อม: ต้องไม่ถูกจอง, เวลาถูกต้อง, และไม่ใช่วันในอดีต
             const avail = !booked && !isTimeInvalid && !isPastDate;
             
             let statusText = '✅ ว่าง (คลิกเพื่อจอง)';
@@ -567,6 +566,7 @@
             </div>`;
         }).join('');
     }
+    
     function renderInventoryCheckboxes(dateStr, startTime, endTime) {
         const container = document.getElementById('inventory-list-container');
         
