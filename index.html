@@ -232,4 +232,451 @@
      </div>
      
      <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3">
-      <label class="text-xs font-bold text-blue-900 block">
+      <label class="text-xs font-bold text-blue-900 block">📅 รูปแบบการจอง</label>
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-6">
+        <label class="flex items-center gap-2 text-xs font-semibold text-neutral-700 cursor-pointer">
+          <input type="radio" name="booking_type" value="single" checked onclick="toggleMultiDayInput()" class="text-amber-500 focus:ring-amber-400 w-4 h-4">
+          <span>จองวันเดียว (ปกติ)</span>
+        </label>
+        <label class="flex items-center gap-2 text-xs font-semibold text-blue-800 cursor-pointer">
+          <input type="radio" name="booking_type" value="multiday" onclick="toggleMultiDayInput()" class="text-amber-500 focus:ring-amber-400 w-4 h-4">
+          <span>จองต่อเนื่อง (สัมมนา)</span>
+        </label>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div>
+          <label class="text-[11px] text-neutral-500 font-semibold block mb-1">เริ่ม / เวลา:</label>
+          <input id="form-datetime" type="text" readonly class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white font-semibold text-neutral-800 outline-none">
+        </div>
+        <div id="end-date-wrapper" class="hidden">
+          <label class="text-[11px] text-blue-900 font-bold block mb-1" for="form-end-date">ถึงวันที่สิ้นสุด:</label>
+          <input id="form-end-date" type="date" class="w-full border border-blue-300 rounded-xl px-3 py-2 text-xs bg-white font-semibold text-neutral-800 focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+      </div>
+     </div>
+
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+         <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-name">ชื่อผู้จอง</label> 
+         <input id="form-name" type="text" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="ชื่อ-นามสกุล">
+        </div>
+        <div>
+         <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-phone">เบอร์โทรศัพท์</label> 
+         <input id="form-phone" type="tel" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="เบอร์โทรติดต่อ">
+        </div>
+     </div>
+     <div>
+      <label class="text-xs font-bold text-neutral-700 block mb-1" for="form-purpose">วัตถุประสงค์ / ชื่อการประชุม</label> 
+      <input id="form-purpose" type="text" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500" placeholder="เช่น ประชุมหน่วยงานประจำสัปดาห์">
+     </div>
+     
+     <div>
+      <label class="text-xs font-bold text-neutral-800 block mb-1.5 flex items-center gap-1.5">
+        <i data-lucide="package" class="w-3.5 h-3.5 text-neutral-600"></i> ยืมอุปกรณ์ส่วนกลางเพิ่มเติม
+      </label>
+      <div id="inventory-list-container" class="space-y-1.5 border border-gray-200 rounded-2xl p-3 bg-gray-50/60 max-h-32 overflow-y-auto cal-scroll"></div>
+     </div>
+
+     <div>
+      <label class="text-xs font-bold text-neutral-800 block mb-1 flex items-center gap-1">
+        <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-600"></i> ตั้งรหัส PIN 4 หลัก (สำหรับยกเลิก)
+      </label>
+      <div class="flex items-center gap-2">
+        <input id="form-pin" type="text" required maxlength="4" pattern="[0-9]{4}" class="w-24 border border-amber-300 rounded-xl px-3 py-2 text-sm font-bold tracking-widest bg-amber-50/60 text-center outline-none focus:ring-2 focus:ring-amber-400" placeholder="0000" title="กรุณากรอกตัวเลข 4 หลัก">
+        <span class="text-[10px] text-neutral-400 leading-tight">*(จำรหัสนี้ไว้ใช้ยกเลิกภายหลัง)*</span>
+      </div>
+     </div>
+
+     <div class="flex gap-2 pt-4 border-t border-gray-100">
+      <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-neutral-600 hover:bg-gray-50 transition w-1/3">ยกเลิก</button>
+      <button id="submit-btn" type="submit" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-amber-400 hover:bg-amber-500 text-neutral-900 shadow-sm transition flex items-center justify-center gap-1.5">
+        <i data-lucide="check-circle-2" class="w-4 h-4"></i> ยืนยันการจอง
+      </button> 
+     </div>
+    </form>
+   </div>
+  </div>
+
+  <script>
+    function sendLineNotification(textMessage) {
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_IPXcMgazC_kY51WV2PtMLe2HMfQ92KWafb4OssfIe2PvJg9uTqPNsKMgncqWq1mnOA/exec";
+        fetch(WEB_APP_URL, {
+            method: "POST", mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: textMessage })
+        }).catch(err => console.error("LINE:", err));
+    }
+
+    const ROOMS = ['ห้องประชุม VIP ชั้น 1', 'ห้องประชุม 1 ชั้น 2', 'ห้องประชุม 2 ชั้น 2', 'ห้องประชุม 3 ชั้น 3', 'ห้องประชุมชั้น 6'];
+    const ROOM_FIXED_EQUIPMENT = {
+        'ห้องประชุม VIP ชั้น 1': 'ทีวี 1 เครื่อง', 'ห้องประชุม 1 ชั้น 2': 'โปรเจกเตอร์ 1 เครื่อง',
+        'ห้องประชุม 2 ชั้น 2': 'ทีวี 4 จอ, โปรเจกเตอร์ 1 เครื่อง, ปลั๊กพ่วง, ไมค์',
+        'ห้องประชุม 3 ชั้น 3': 'โปรเจกเตอร์ 1 เครื่อง, อินเตอร์เน็ต', 'ห้องประชุมชั้น 6': 'สมาร์ททีวี 1 เครื่อง, อินเตอร์เน็ต'
+    };
+    const SHARED_INVENTORY = [
+        { id: 'wireless_mic', name: 'ไมค์ลอย', total: 1 }, { id: 'wired_mic', name: 'ไมค์สาย', total: 2 },
+        { id: 'laptop', name: 'โน้ตบุ๊ค', total: 1 }, { id: 'lan_adapter', name: 'สายแปลง LAN', total: 1 },
+        { id: 'printer', name: 'เครื่องปิ้งเอกสาร', total: 1 }, { id: 'hdmi_cable', name: 'สาย HDMI', total: 1 }
+    ];
+
+    let allBookings = [];
+    let selectedDate = new Date();
+    let calMonth = new Date();
+    let selectedRoom = null;
+    let isAdmin = false;
+    let isExecMode = false; // ตัวแปรคุมโหมดผู้บริหาร
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC92wvC7DJJ8fTa0LQ5EB_xFECxqNXbbAc",
+      authDomain: "chulachomklao-meeting-room.firebaseapp.com",
+      projectId: "chulachomklao-meeting-room",
+      storageBucket: "chulachomklao-meeting-room.firebasestorage.app",
+      messagingSenderId: "195363949472", appId: "1:195363949472:web:6da4bc5cd023d12023b2c5"
+    };
+
+    if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const firestoreDb = firebase.firestore();
+
+    const db = {
+        load() {
+            firestoreDb.collection("bookings").onSnapshot((snapshot) => {
+                allBookings = [];
+                snapshot.forEach((doc) => { let data = doc.data(); data.__backendId = doc.id; allBookings.push(data); });
+                this.refreshAll();
+            });
+        },
+        save(record, callback) {
+            firestoreDb.collection("bookings").add(record).then(() => { if(callback) callback(true); }).catch((e) => { alert("Error: " + e); if(callback) callback(false); });
+        },
+        update(updatedRecord) {
+            const id = updatedRecord.__backendId; const dataToUpdate = { ...updatedRecord }; delete dataToUpdate.__backendId;
+            firestoreDb.collection("bookings").doc(id).update(dataToUpdate).catch((e) => { alert("Error: " + e); });
+        },
+        refreshAll() {
+            renderRooms(); showDateBookings(); renderCalendar(); 
+            if (!document.getElementById('page-mybookings').classList.contains('hidden')) renderMyBookings();
+            if (!document.getElementById('page-stats').classList.contains('hidden')) renderStats();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    };
+
+    function populateTimes() {
+        const s = document.getElementById('start-time'), e = document.getElementById('end-time');
+        s.innerHTML = ''; e.innerHTML = '';
+        for (let h = 7; h <= 18; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                if (h === 18 && m > 0) continue;
+                const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                s.innerHTML += `<option value="${t}">${t}</option>`; e.innerHTML += `<option value="${t}">${t}</option>`;
+            }
+        }
+        s.value = '09:00'; e.value = '10:00'; s.onchange = e.onchange = () => { handleTimeChange(); };
+    }
+
+    function handleTimeChange() {
+        const st = document.getElementById('start-time').value, et = document.getElementById('end-time').value;
+        const errLabel = document.getElementById('time-error');
+        if(st >= et) errLabel.classList.remove('hidden'); else errLabel.classList.add('hidden');
+        renderRooms(); showDateBookings();
+    }
+
+    function populateFilterRooms() {
+        const filterRoom = document.getElementById('filter-room');
+        if (!filterRoom) return; filterRoom.innerHTML = '<option value="">ทุกห้องประชุม</option>';
+        ROOMS.forEach((r) => { filterRoom.innerHTML += `<option value="${r}">${r}</option>`; });
+    }
+
+    // ฟังก์ชันเปิด/ปิด โหมดผู้บริหาร
+    function toggleExecMode() {
+        isExecMode = !isExecMode;
+        const btn = document.getElementById('btn-exec-mode');
+        if (isExecMode) {
+            btn.classList.replace('bg-indigo-50', 'bg-indigo-600');
+            btn.classList.replace('text-indigo-700', 'text-white');
+            btn.innerHTML = `<i data-lucide="eye" class="w-4 h-4"></i> ปิดโหมดขยาย (กลับสู่ปกติ)`;
+        } else {
+            btn.classList.replace('bg-indigo-600', 'bg-indigo-50');
+            btn.classList.replace('text-white', 'text-indigo-700');
+            btn.innerHTML = `<i data-lucide="camera" class="w-4 h-4"></i> ขยายจอแคปส่งผู้บริหาร`;
+        }
+        renderCalendar();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('cal-grid');
+        const y = calMonth.getFullYear(), m = calMonth.getMonth();
+        const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        document.getElementById('cal-month-label').textContent = `${thMonths[m]} ${y + 543}`;
+        const first = new Date(y, m, 1).getDay();
+        const days = new Date(y, m + 1, 0).getDate();
+        const today = new Date();
+        let html = '';
+        
+        for (let i = 0; i < first; i++) html += '<div></div>';
+        
+        const roomColors = {
+            'ห้องประชุม VIP ชั้น 1': { bg: '#fef08a', text: '#854d0e', short: 'VIP' },
+            'ห้องประชุม 1 ชั้น 2':   { bg: '#fbcfe8', text: '#9d174d', short: 'ห้อง 1' },
+            'ห้องประชุม 2 ชั้น 2':   { bg: '#d1fae5', text: '#065f46', short: 'ห้อง 2' },
+            'ห้องประชุม 3 ชั้น 3':   { bg: '#ffedd5', text: '#9a3412', short: 'ห้อง 3' },
+            'ห้องประชุมชั้น 6':      { bg: '#f3e8ff', text: '#6b21a8', short: 'ชั้น 6' }
+        };
+        
+        for (let d = 1; d <= days; d++) {
+            const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
+            const isSel = selectedDate.getFullYear()===y && selectedDate.getMonth()===m && selectedDate.getDate()===d;
+            
+            // ดึงการจองและจัดเรียงตามเวลา
+            let dayBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active');
+            dayBookings.sort((a,b) => a.start_time.localeCompare(b.start_time));
+            
+            // ตรรกะแสดงผลโหมดปกติ vs โหมดแคปภาพ
+            let visibleBookings = dayBookings;
+            let hiddenCount = 0;
+            
+            if (!isExecMode) {
+                const maxVisible = 2; // แสดงแค่ 2 รายการในโหมดปกติ
+                visibleBookings = dayBookings.slice(0, maxVisible);
+                hiddenCount = dayBookings.length - maxVisible;
+            }
+
+            const bookingsHtml = visibleBookings.map(b => {
+                const c = roomColors[b.room_name] || { bg: '#e5e7eb', text: '#1f2937', short: 'ห้อง' };
+                // ถ้าโหมดขยาย ให้เว้นบรรทัดและไม่ตัดคำ (whitespace-normal)
+                const textStyle = isExecMode ? "whitespace-normal text-[10px] leading-[1.3] py-1 border-l-2" : "truncate text-[9px] md:text-[10px] leading-tight py-0.5";
+                const borderStyle = isExecMode ? `border-color: ${c.text};` : "";
+                
+                return `
+                    <div class="rounded px-1.5 mt-0.5 text-left font-medium shadow-sm ${textStyle}" 
+                           style="background-color: ${c.bg}; color: ${c.text}; ${borderStyle}">
+                          <span class="font-bold">[${c.short}]</span> ${b.start_time} ${isExecMode ? '<br/>' + b.purpose : ' '+b.purpose}
+                    </div>
+                `;
+            }).join('');
+
+            const moreHtml = hiddenCount > 0 ? `<div class="text-[9px] font-bold text-center text-indigo-700 bg-indigo-50 rounded mt-0.5 py-0.5 shadow-sm">+อีก ${hiddenCount} รายการ</div>` : '';
+
+            let dayNumClass = 'w-6 h-6 md:w-7 md:h-7 flex items-center justify-center text-xs mx-auto hover:bg-emerald-50 rounded-xl font-bold transition';
+            if (isSel) dayNumClass += ' cal-selected'; else if (isToday) dayNumClass += ' cal-today';
+
+            // ถ้าเปิดโหมดผู้บริหาร ให้กล่องขยายตามเนื้อหา (ไม่มี max-h, overflow-hidden)
+            const boxClass = isExecMode 
+                ? "w-full flex flex-col gap-1 mt-1" 
+                : "w-full flex flex-col gap-0.5 overflow-hidden mt-1 max-h-[55px]";
+
+            const containerMinHeight = isExecMode ? "min-h-[120px]" : "min-h-[85px] md:min-h-[90px]";
+
+            html += `
+                <div class="cal-cell border border-gray-100 p-1 ${containerMinHeight} bg-white rounded-2xl flex flex-col justify-start cursor-pointer hover:border-emerald-200 shadow-sm" onclick="selectDate('${dateStr}')">
+                    <span class="${dayNumClass}">${d}</span>
+                    <div class="${boxClass}">
+                        ${bookingsHtml}
+                        ${moreHtml}
+                    </div>
+                </div>
+            `;
+        }
+        grid.innerHTML = html;
+    }
+
+    function changeMonth(dir) { calMonth.setMonth(calMonth.getMonth() + dir); renderCalendar(); }
+    function selectDate(str) { selectedDate = new Date(str + 'T00:00:00'); renderCalendar(); renderRooms(); showDateBookings(); }
+    function getDateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+    function showDateBookings() {
+        const panel = document.getElementById('date-bookings-panel'), list = document.getElementById('date-bookings-list');
+        const ds = getDateStr(selectedDate);
+        let bookings = allBookings.filter(b => b.date === ds && b.status === 'active');
+        bookings.sort((a,b) => a.start_time.localeCompare(b.start_time));
+        
+        if (bookings.length === 0) { panel.classList.add('hidden'); return; }
+        
+        panel.classList.remove('hidden');
+        list.innerHTML = bookings.map(b => `
+            <div class="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-sm border border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <div>🕐 <strong class="text-amber-950">${b.start_time} - ${b.end_time}</strong> | <span class="text-emerald-800 font-bold">${b.room_name}</span></div>
+                <div class="text-neutral-700 font-semibold truncate sm:ml-2">📌 ${b.purpose} <span class="text-[10px] text-neutral-400">(${b.booker_name})</span></div>
+            </div>
+        `).join('');
+    }
+
+    function isOverlap(s1, e1, s2, e2) { return s1 < e2 && s2 < e1; }
+
+    function renderRooms() {
+        const grid = document.getElementById('rooms-grid'), ds = getDateStr(selectedDate);
+        const st = document.getElementById('start-time').value, et = document.getElementById('end-time').value;
+        const isTimeInvalid = st >= et, isPastDate = ds < getDateStr(new Date());
+        
+        grid.innerHTML = ROOMS.map(room => {
+            let booked = false;
+            if(!isTimeInvalid) booked = allBookings.some(b => b.room_name === room && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time));
+            const avail = !booked && !isTimeInvalid && !isPastDate;
+            
+            let statusBadge = '<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ว่าง (จอง)</span>';
+            if (isPastDate) statusBadge = '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap">❌ ย้อนหลังไม่ได้</span>';
+            else if (isTimeInvalid) statusBadge = '<span class="bg-red-100 text-red-600 px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap">⚠️ เวลาผิด</span>';
+            else if (booked) statusBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-[10px] md:text-xs font-semibold whitespace-nowrap">🔴 ไม่ว่าง</span>';
+
+            let suggestionHtml = '';
+            if (booked && !isTimeInvalid && !isPastDate) {
+                const altRooms = ROOMS.filter(r => r !== room && !allBookings.some(b => b.room_name === r && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time)));
+                if (altRooms.length > 0) suggestionHtml = `<div class="mt-3 pt-3 border-t border-red-100 text-xs text-blue-900"><span class="font-bold">💡 ห้องว่างทดแทน:</span><div class="flex flex-wrap gap-1.5 mt-1">${altRooms.map(aRoom => `<button type="button" class="bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 rounded-lg px-2 py-1 font-bold shadow-sm transition" onclick="event.stopPropagation(); openBooking('${aRoom}')">👉 ${aRoom}</button>`).join('')}</div></div>`;
+            }
+
+            return `<div class="room-card border rounded-2xl p-4 md:p-5 bg-white shadow-sm flex flex-col justify-between ${avail ? 'border-emerald-200 hover:border-emerald-400 cursor-pointer bg-gradient-to-br from-white to-emerald-50/20' : 'border-gray-200/80 bg-gray-50/50 opacity-90'}" onclick="${avail ? `openBooking('${room}')` : ''}">
+                <div><div class="flex items-start justify-between gap-2 mb-2"><h4 class="font-bold text-sm md:text-base text-neutral-900">${room}</h4>${statusBadge}</div><p class="text-[11px] text-neutral-500 font-medium leading-relaxed">📌 อุปกรณ์: <span class="text-neutral-700">${ROOM_FIXED_EQUIPMENT[room]}</span></p></div>${suggestionHtml}
+            </div>`;
+        }).join('');
+    }
+
+    function renderInventoryCheckboxes(dateStr, startTime, endTime) {
+        const container = document.getElementById('inventory-list-container');
+        const overlappingBookings = allBookings.filter(b => b.date === dateStr && b.status === 'active' && isOverlap(startTime, endTime, b.start_time, b.end_time));
+        const usedCount = {};
+        overlappingBookings.forEach(b => { if (b.borrowed_items && Array.isArray(b.borrowed_items)) { b.borrowed_items.forEach(itemId => { usedCount[itemId] = (usedCount[itemId] || 0) + 1; }); }});
+
+        container.innerHTML = SHARED_INVENTORY.map(item => {
+            const borrowed = usedCount[item.id] || 0, available = item.total - borrowed, isOutOfStock = available <= 0;
+            return `<label class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white border border-gray-100 transition cursor-pointer ${isOutOfStock ? 'opacity-50 cursor-not-allowed text-red-700 bg-red-50/30' : 'text-neutral-700 hover:border-emerald-200'}">
+                    <div class="flex items-center gap-2.5"><input type="checkbox" name="inventory_item" value="${item.id}" ${isOutOfStock ? 'disabled' : ''} class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"><span class="font-bold">${item.name}</span></div>
+                    <span class="font-bold ${isOutOfStock ? 'text-red-600' : 'text-emerald-700'}">${isOutOfStock ? '❌ (หมดสต็อก)' : '(ว่าง: ' + available + '/' + item.total + ')'}</span>
+                </label>`;
+        }).join('');
+    }
+
+    function openBooking(room) {
+        selectedRoom = room; document.getElementById('form-room').value = room; document.getElementById('fixed-eq-text').textContent = ROOM_FIXED_EQUIPMENT[room] || '-';
+        const ds = getDateStr(selectedDate), st = document.getElementById('start-time').value, et = document.getElementById('end-time').value;
+        document.querySelector('input[name="booking_type"][value="single"]').checked = true; toggleMultiDayInput();
+        document.getElementById('form-datetime').value = `${ds} | ${st} - ${et}`;
+        document.getElementById('form-name').value = ''; document.getElementById('form-phone').value = ''; document.getElementById('form-purpose').value = ''; document.getElementById('form-pin').value = '';
+        renderInventoryCheckboxes(ds, st, et);
+        const modal = document.getElementById('booking-modal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    
+    function closeModal() { const modal = document.getElementById('booking-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+    document.getElementById('booking-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const st = document.getElementById('start-time').value, et = document.getElementById('end-time').value, isMultiDay = document.querySelector('input[name="booking_type"]:checked').value === 'multiday';
+        let targetDates = [];
+        if (isMultiDay) {
+            const startDateStr = getDateStr(selectedDate), endDateStr = document.getElementById('form-end-date').value;
+            if (endDateStr <= startDateStr) { alert("❌ 'ถึงวันที่' ต้องมากกว่าวันเริ่มจอง"); return; }
+            targetDates = getDateRangeArray(startDateStr, endDateStr);
+            if (targetDates.length > 14) { alert("⚠️ จองต่อเนื่องได้ไม่เกิน 14 วัน"); return; }
+        } else { targetDates = [getDateStr(selectedDate)]; }
+
+        let conflictDate = null;
+        for (const ds of targetDates) { if (allBookings.some(b => b.room_name === selectedRoom && b.date === ds && b.status === 'active' && isOverlap(st, et, b.start_time, b.end_time))) { conflictDate = ds; break; } }
+        if (conflictDate) { alert(`❌ ไม่สามารถจองต่อเนื่องได้ เนื่องจากวันที่ ${conflictDate} มีผู้จองแล้ว`); return; }
+
+        const borrowedIds = Array.from(document.querySelectorAll('input[name="inventory_item"]:checked')).map(cb => cb.value);
+        const borrowedNames = borrowedIds.map(id => SHARED_INVENTORY.find(item => item.id === id)?.name).filter(Boolean);
+        const submitBtn = document.getElementById('submit-btn'); submitBtn.disabled = true; submitBtn.innerText = "กำลังบันทึก...";
+
+        let savedCount = 0;
+        targetDates.forEach((ds) => {
+            const record = {
+                room_name: selectedRoom, booker_name: document.getElementById('form-name').value.trim(), phone: document.getElementById('form-phone').value.trim(),
+                purpose: document.getElementById('form-purpose').value.trim() + (isMultiDay ? ` (ต่อเนื่อง ${targetDates.length} วัน)` : ''),
+                equipment: borrowedNames.join(', '), borrowed_items: borrowedIds, pin_code: document.getElementById('form-pin').value.trim(),
+                date: ds, start_time: st, end_time: et, status: 'active'
+            };
+            db.save(record, (success) => {
+                if (success) {
+                    savedCount++;
+                    if (savedCount === targetDates.length) {
+                        submitBtn.disabled = false; submitBtn.innerHTML = '<i data-lucide="check-circle-2" class="w-4 h-4"></i> ยืนยันการจอง';
+                        sendLineNotification(`📢 จองห้องประชุม\n🏢 ${selectedRoom}\n👤 ${record.booker_name}\n📅 ${targetDates.join(', ')}\n⏰ ${st} - ${et}\n📝 ${record.purpose}`);
+                        closeModal(); alert(`🎉 บันทึกการจองสำเร็จ!`);
+                    }
+                }
+            });
+        });
+    });
+
+    function toggleAdminMode() {
+        if (isAdmin) { if(confirm('🔒 ออกจากระบบผู้ดูแลระบบใช่หรือไม่?')) { isAdmin = false; updateAdminUI(); } return; }
+        if (prompt("👑 รหัสผ่านสำหรับผู้ดูแลระบบ:") === "\x43\x52\x4d\x41\x31\x31\x34\x39\x31") { isAdmin = true; alert("✅ เข้าสู่โหมดแอดมิน"); updateAdminUI(); } else { alert("❌ รหัสผ่านไม่ถูกต้อง!"); }
+    }
+    function updateAdminUI() {
+        const btnToggle = document.getElementById('btn-admin-toggle'), banner = document.getElementById('admin-banner'), btnExcel1 = document.getElementById('btn-export-excel');
+        if (isAdmin) {
+            btnToggle.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i> แอดมิน (ออก)`; btnToggle.classList.replace('bg-white/20', 'bg-amber-500'); btnToggle.classList.replace('text-white', 'text-neutral-900');
+            banner.classList.remove('hidden'); banner.classList.add('flex'); if (btnExcel1) { btnExcel1.classList.remove('hidden'); btnExcel1.classList.add('flex'); }
+        } else {
+            btnToggle.innerHTML = `<i data-lucide="shield" class="w-3.5 h-3.5"></i> แอดมิน`; btnToggle.classList.replace('bg-amber-500', 'bg-white/20'); btnToggle.classList.replace('text-neutral-900', 'text-white');
+            banner.classList.add('hidden'); banner.classList.remove('flex'); if (btnExcel1) { btnExcel1.classList.add('hidden'); btnExcel1.classList.remove('flex'); }
+        }
+        renderMyBookings(); if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    function toggleMultiDayInput() {
+        const isMultiDay = document.querySelector('input[name="booking_type"]:checked').value === 'multiday', wrapper = document.getElementById('end-date-wrapper'), inputEndDate = document.getElementById('form-end-date');
+        if (isMultiDay) { wrapper.classList.remove('hidden'); inputEndDate.required = true; const tomorrow = new Date(selectedDate); tomorrow.setDate(tomorrow.getDate() + 1); inputEndDate.value = getDateStr(tomorrow); inputEndDate.min = getDateStr(selectedDate); } else { wrapper.classList.add('hidden'); inputEndDate.required = false; }
+    }
+    function getDateRangeArray(sd, ed) {
+        const arr = []; let cur = new Date(sd + 'T00:00:00'); const stop = new Date(ed + 'T00:00:00');
+        while (cur <= stop) { arr.push(getDateStr(cur)); cur.setDate(cur.getDate() + 1); } return arr;
+    }
+    function showPage(page) {
+        ['home','mybookings','stats'].forEach(p => { document.getElementById('page-'+p).classList.toggle('hidden', p!==page); document.getElementById('tab-'+p).classList.toggle('tab-active', p===page); document.getElementById('tab-'+p).classList.toggle('text-white/90', p!==page); });
+        if (page==='mybookings') { document.getElementById('filter-date').value = getDateStr(selectedDate); renderMyBookings(); }
+        if (page==='stats') { if (!document.getElementById('stats-start-date').value) { document.getElementById('stats-start-date').value = getDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1)); document.getElementById('stats-end-date').value = getDateStr(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)); } renderStats(); }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    function renderMyBookings() {
+        const list = document.getElementById('mybookings-list'), empty = document.getElementById('mybookings-empty'), roomF = document.getElementById('filter-room').value, dateF = document.getElementById('filter-date').value;
+        let filtered = allBookings.filter(b => b.status === 'active');
+        if (roomF) filtered = filtered.filter(b => b.room_name === roomF); if (dateF) filtered = filtered.filter(b => b.date === dateF);
+        filtered.sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
+        if (filtered.length === 0) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        list.innerHTML = filtered.map(b => `<div class="border border-gray-100 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/60 shadow-sm hover:bg-white transition ${isAdmin ? 'border-amber-200 bg-amber-50/20' : ''}"><div class="text-xs text-neutral-700 space-y-1 w-full md:w-auto"><div><strong class="text-sm text-neutral-900">${b.booker_name}</strong> <span class="text-neutral-500">(📞 ${b.phone})</span> — <span class="text-emerald-700 font-bold">${b.room_name}</span></div><div class="text-neutral-600 font-medium">📅 วันที่: ${b.date} | 🕐 เวลา: ${b.start_time} - ${b.end_time}</div><div class="text-neutral-500">เรื่อง: ${b.purpose} ${b.equipment ? `| ยืม: ${b.equipment}` : ''}</div></div><button onclick="cancelBooking('${b.__backendId}')" class="w-full md:w-auto justify-center text-xs ${isAdmin ? 'bg-amber-400 hover:bg-amber-500 text-neutral-900' : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/60'} px-4 py-2 rounded-xl font-bold shadow-sm transition flex items-center gap-1">${isAdmin ? '👑 ยกเลิก (Admin)' : '❌ ยกเลิกการจอง'}</button></div>`).join('');
+    }
+    function clearFilters() { document.getElementById('filter-room').value = ""; document.getElementById('filter-date').value = ""; renderMyBookings(); }
+    function cancelBooking(id) {
+        const rec = allBookings.find(b => b.__backendId === id); if (!rec) return;
+        if (isAdmin) { if (confirm(`👑 [แอดมิน]\nต้องการยกเลิกการจองห้อง "${rec.room_name}" ของคุณ "${rec.booker_name}" ใช่หรือไม่?`)) db.update({ ...rec, status: 'cancelled' }); return; }
+        const inputVerify = prompt(`🔐 กรุณากรอก "รหัส PIN 4 หลัก" หรือ "เบอร์โทรศัพท์" เพื่อยืนยันการยกเลิก:`); if (inputVerify === null) return;
+        if (inputVerify.trim() === rec.pin_code || inputVerify.trim() === rec.phone) { if (confirm('🚨 ยืนยันการยกเลิกห้องประชุมนี้ใช่หรือไม่?')) db.update({ ...rec, status: 'cancelled' }); } else { alert('❌ รหัส PIN หรือเบอร์โทรศัพท์ไม่ถูกต้อง!'); }
+    }
+    let roomChartInstance = null;
+    function renderStats() {
+        const sd = document.getElementById('stats-start-date').value, ed = document.getElementById('stats-end-date').value;
+        const rangeBookings = allBookings.filter(b => b.status === 'active' && (!sd || !ed || (b.date >= sd && b.date <= ed)));
+        const total = rangeBookings.length, roomCounts = {}, hourCounts = {}, inventoryCounts = {};
+        SHARED_INVENTORY.forEach(i => inventoryCounts[i.name] = 0);
+        rangeBookings.forEach(b => { roomCounts[b.room_name] = (roomCounts[b.room_name]||0) + 1; const h = b.start_time?.split(':')[0]; if (h) hourCounts[h] = (hourCounts[h]||0) + 1; if (b.borrowed_items && Array.isArray(b.borrowed_items)) { b.borrowed_items.forEach(itemId => { const found = SHARED_INVENTORY.find(i => i.id === itemId); if (found) inventoryCounts[found.name] = (inventoryCounts[found.name]||0) + 1; }); }});
+        const topRoom = Object.entries(roomCounts).sort((a,b)=>b[1]-a[1])[0], topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
+        let totalDaysInRange = 1; if (sd && ed) totalDaysInRange = Math.max(1, Math.round((new Date(ed) - new Date(sd))/(1000*60*60*24)) + 1);
+        const totalAvailableHoursPerRoom = totalDaysInRange * 11;
+
+        document.getElementById('stats-cards').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><div class="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100 shadow-sm"><div class="text-2xl font-bold text-emerald-700">${total}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">การจอง (ครั้ง)</div></div><div class="bg-amber-50/60 rounded-2xl p-4 text-center border border-amber-100 shadow-sm"><div class="text-base font-bold text-amber-800 truncate">${topRoom?topRoom[0]:'—'}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">ห้องยอดฮิต</div></div><div class="bg-blue-50/60 rounded-2xl p-4 text-center border border-blue-100 shadow-sm"><div class="text-base font-bold text-blue-800">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-xs font-semibold text-neutral-600 mt-0.5">เวลายอดนิยม</div></div></div>`;
+        document.getElementById('utilization-table-content').innerHTML = `<table class="w-full text-left border-collapse min-w-[300px]"><thead><tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold"><th class="pb-2">ห้องประชุม</th><th class="pb-2 text-right">เวลาใช้รวม</th><th class="pb-2 text-right">% อัตราการใช้</th></tr></thead><tbody>${ROOMS.map(r => { let hrs = 0; rangeBookings.filter(b => b.room_name === r).forEach(b => { const [sh, sm] = b.start_time.split(':').map(Number); const [eh, em] = b.end_time.split(':').map(Number); hrs += (eh + em/60) - (sh + sm/60); }); return `<tr class="border-b border-gray-100 text-xs"><td class="py-2 font-semibold text-neutral-700">${r}</td><td class="py-2 text-right text-neutral-500 font-medium">${hrs.toFixed(1)} ชม.</td><td class="py-2 text-right font-bold text-emerald-700">${Math.min(100, (hrs/totalAvailableHoursPerRoom)*100).toFixed(1)}%</td></tr>`; }).join('')}</tbody></table>`;
+        document.getElementById('inventory-stats-content').innerHTML = `<div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm"><h4 class="font-bold text-sm mb-3 text-indigo-900 flex items-center gap-1.5"><i data-lucide="package-open" class="w-4 h-4 text-indigo-700"></i> สถิติยืมอุปกรณ์</h4><div class="overflow-x-auto cal-scroll"><table class="w-full text-left border-collapse min-w-[250px]"><thead><tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold"><th class="pb-2">อุปกรณ์</th><th class="pb-2 text-right">ยืม (ครั้ง)</th></tr></thead><tbody class="divide-y divide-gray-100">${Object.entries(inventoryCounts).map(([k, v]) => `<tr class="text-xs"><td class="py-2 font-semibold text-neutral-700">📦 ${k}</td><td class="py-2 text-right font-bold text-indigo-600">${v}</td></tr>`).join('')}</tbody></table></div></div>`;
+        document.getElementById('stats-content').innerHTML = `<div class="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm"><h4 class="font-bold text-sm mb-3 text-neutral-800 flex items-center gap-1.5"><i data-lucide="building" class="w-4 h-4 text-emerald-700"></i> ยอดใช้ต่อห้อง</h4><div class="overflow-x-auto cal-scroll"><table class="w-full text-left border-collapse min-w-[250px]"><thead><tr class="border-b border-gray-200 text-xs text-neutral-400 font-semibold"><th class="pb-2">ชื่อห้อง</th><th class="pb-2 text-right">จำนวน (ครั้ง)</th></tr></thead><tbody class="divide-y divide-gray-100 text-xs">${ROOMS.map(r => `<tr class="hover:bg-gray-50/80 transition"><td class="py-2 font-medium text-neutral-800">${r}</td><td class="py-2 text-right font-bold text-emerald-700">${roomCounts[r]||0}</td></tr>`).join('')}</tbody></table></div></div>`;
+        if (roomChartInstance) roomChartInstance.destroy();
+        roomChartInstance = new Chart(document.getElementById('roomChart').getContext('2d'), { type: 'doughnut', data: { labels: ROOMS.map(r => r.replace('ห้องประชุม ', '')), datasets: [{ data: ROOMS.map(r => roomCounts[r] || 0), backgroundColor: ['#fef08a', '#fbcfe8', '#d1fae5', '#ffedd5', '#f3e8ff'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, family: 'DM Sans' } } } } } });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    function init() { populateTimes(); populateFilterRooms(); const fd = document.getElementById('filter-date'); if (fd) fd.value = getDateStr(new Date()); db.load(); } window.onload = init;
+    function exportToExcel() {
+        if (!isAdmin) { alert("❌ กรุณาเข้าสู่ระบบผู้ดูแลระบบ (Admin) ก่อน"); return; }
+        if (allBookings.length === 0) { alert('ไม่มีข้อมูล'); return; }
+        const sd = document.getElementById('stats-start-date').value, ed = document.getElementById('stats-end-date').value;
+        let act = allBookings.filter(b => b.status === 'active');
+        if (sd && ed) act = act.filter(b => b.date >= sd && b.date <= ed);
+        if (act.length === 0) { alert('⚠️ ไม่พบข้อมูลในช่วงที่เลือก'); return; }
+        let csv = "\uFEFFวันที่,เวลาเริ่ม,เวลาสิ้นสุด,ห้องประชุม,ชื่อผู้จอง,เบอร์โทร,วัตถุประสงค์,อุปกรณ์,สถานะ\n";
+        act.sort((a,b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)).forEach(b => { csv += `"${b.date}","${b.start_time}","${b.end_time}","${b.room_name}","${b.booker_name}","${b.phone}","${b.purpose}","${b.equipment}","${b.status}"\n`; });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.setAttribute("download", `รายงานจองห้องประชุม.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
