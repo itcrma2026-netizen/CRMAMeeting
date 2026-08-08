@@ -65,7 +65,7 @@
     </div>
 
     <div class="bg-white rounded-xl p-4 shadow mb-4">
-     <h3 class="font-semibold mb-3" style="color: rgb(26, 26, 26); font-size: 19px;">⏰ เลือกช่วงเวลา</h3>
+     <h3 class="font-semibold mb-3" style="color: rgb(26, 26, 26); font-size: 19px;">⏰ เลือกช่วงเวลา (เวลาทำการ 07:00 - 18:00 น.)</h3>
      <div class="flex gap-3 items-center flex-wrap">
       <label class="text-sm">เริ่ม: <select id="start-time" class="border rounded px-2 py-1 text-sm"></select></label> 
       <label class="text-sm">สิ้นสุด: <select id="end-time" class="border rounded px-2 py-1 text-sm"></select></label>
@@ -108,18 +108,42 @@
 
    <section id="page-stats" class="hidden">
     <div class="bg-white rounded-xl p-4 shadow">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="font-bold" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
-        <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition hidden flex items-center gap-1.5">
-            📊 ดาวน์โหลดข้อมูลสำหรับทำรายงาน (.csv)
-        </button>
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h2 class="font-bold" style="color: rgb(22, 101, 52); font-size: 20px;">📊 สถิติการใช้งานห้องประชุม</h2>
+          <p class="text-xs text-gray-500">เลือกเดือนและปีที่ต้องการดูข้อมูลย้อนหลังได้ตามต้องการ</p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <select id="stats-filter-month" class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 font-medium" onchange="renderStats()">
+            <option value="0">มกราคม</option>
+            <option value="1">กุมภาพันธ์</option>
+            <option value="2">มีนาคม</option>
+            <option value="3">เมษายน</option>
+            <option value="4">พฤษภาคม</option>
+            <option value="5">มิถุนายน</option>
+            <option value="6">กรกฎาคม</option>
+            <option value="7">สิงหาคม</option>
+            <option value="8">กันยายน</option>
+            <option value="9">ตุลาคม</option>
+            <option value="10">พฤศจิกายน</option>
+            <option value="11">ธันวาคม</option>
+          </select>
+
+          <select id="stats-filter-year" class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 font-medium" onchange="renderStats()">
+          </select>
+
+          <button id="btn-export-excel-stats" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition hidden flex items-center gap-1.5 ml-2">
+              📊 ดาวน์โหลดรายงาน (.csv)
+          </button>
+        </div>
       </div>
          
       <div id="stats-cards"></div>
          
       <div class="grid grid-cols-2 gap-6 mt-6">
         <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (เดือนนี้)</h4>
+          <h4 class="font-semibold text-sm mb-3 text-neutral-700 text-center">🏢 สัดส่วนการใช้ห้องประชุม (ตามช่วงเวลาที่เลือก)</h4>
           <div class="max-w-[240px] mx-auto w-full">
             <canvas id="roomChart"></canvas>
           </div>
@@ -206,7 +230,6 @@
   </div>
 
   <script>
-    // ฟังก์ชันส่งข้อความแจ้งเตือนผ่าน Google Apps Script ไปยัง LINE
     function sendLineNotification(textMessage) {
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_IPXcMgazC_kY51WV2PtMLe2HMfQ92KWafb4OssfIe2PvJg9uTqPNsKMgncqWq1mnOA/exec";
         
@@ -313,12 +336,15 @@
         }
     };
 
+    // ⏰ ปรับเวลาให้จำกัดเฉพาะช่วงเวลาทำการ 07:00 - 18:00 น.
     function populateTimes() {
         const s = document.getElementById('start-time');
         const e = document.getElementById('end-time');
         s.innerHTML = ''; e.innerHTML = '';
-        for (let h = 7; h <= 20; h++) {
+        for (let h = 7; h <= 18; h++) {
             for (let m = 0; m < 60; m += 30) {
+                // ถ้าเป็นเวลา 18:30 ขึ้นไปจะไม่เอา (เอาถึง 18:00 พอ)
+                if (h === 18 && m > 0) continue;
                 const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
                 s.innerHTML += `<option value="${t}">${t}</option>`;
                 e.innerHTML += `<option value="${t}">${t}</option>`;
@@ -349,6 +375,17 @@
         ROOMS.forEach((r) => {
             filterRoom.innerHTML += `<option value="${r}">${r}</option>`;
         });
+    }
+
+    function populateStatsYears() {
+        const yearSelect = document.getElementById('stats-filter-year');
+        if (!yearSelect) return;
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+        for (let y = currentYear - 2; y <= currentYear + 1; y++) {
+            yearSelect.innerHTML += `<option value="${y}">พ.ศ. ${y + 543}</option>`;
+        }
+        yearSelect.value = currentYear;
     }
 
     function toggleAdminMode() {
@@ -519,7 +556,6 @@
         const todayObj = new Date();
         const todayStr = getDateStr(todayObj);
         
-        // บล็อกเฉพาะ "วันที่ผ่านมาแล้ว" (อดีต) เท่านั้น ส่วน "วันนี้" และ "อนาคต" อนุญาตให้จองได้ตลอดเวลา
         const isPastDate = ds < todayStr;
         
         grid.innerHTML = ROOMS.map(room => {
@@ -535,7 +571,6 @@
             else if (isTimeInvalid) statusText = '❌ ช่วงเวลาไม่ถูกต้อง';
             else if (booked) statusText = '❌ ไม่ว่าง (มีการจองแล้ว)';
 
-            // ระบบแนะนำห้องทดแทนอัตโนมัติ (Smart Suggestion) เมื่อห้องไม่ว่าง
             let suggestionHtml = '';
             if (booked && !isTimeInvalid && !isPastDate) {
                 const availableAlternativeRooms = ROOMS.filter(r => {
@@ -631,7 +666,6 @@
     
     function closeModal() { document.getElementById('booking-modal').classList.add('hidden'); }
 
-    // จัดการบันทึกการจอง (พร้อมสั่งยิงแจ้งเตือน LINE)
     document.getElementById('booking-form').addEventListener('submit', function (e) {
         e.preventDefault();
         
@@ -704,7 +738,6 @@
                         submitBtn.disabled = false;
                         submitBtn.innerText = "✅ ยืนยันการจอง";
                         
-                        // 📢 ส่งข้อความแจ้งเตือนเข้ากลุ่ม LINE
                         const lineMsg = `📢 แจ้งเตือนการจองห้องประชุม\n\n` +
                                         `🏢 ห้อง: ${selectedRoom}\n` +
                                         `👤 ผู้จอง: ${record.booker_name} (📞 ${record.phone})\n` +
@@ -836,23 +869,24 @@
         const topHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
 
         const thMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+        
+        const selectedMonth = parseInt(document.getElementById('stats-filter-month').value);
+        const selectedYear = parseInt(document.getElementById('stats-filter-year').value);
 
         const monthlyBookings = active.filter(b => {
             const [y, m] = b.date.split('-').map(Number);
-            return y === currentYear && m === currentMonth + 1;
+            return y === selectedYear && m === selectedMonth + 1;
         });
+        
         const monthlyRoomCounts = {};
         monthlyBookings.forEach(b => {
             monthlyRoomCounts[b.room_name] = (monthlyRoomCounts[b.room_name]||0) + 1;
         });
-        const monthYear = `${thMonths[currentMonth]} ${currentYear + 543}`;
+        const monthYear = `${thMonths[selectedMonth]} ${selectedYear + 543}`;
         
         const yearlyBookings = active.filter(b => {
             const [y] = b.date.split('-').map(Number);
-            return y === currentYear;
+            return y === selectedYear;
         });
         const yearlyMonthCounts = Array(12).fill(0);
         yearlyBookings.forEach(b => {
@@ -869,7 +903,7 @@
                 <div class="bg-blue-50 rounded-xl p-4 text-center border border-blue-100 shadow-sm"><div class="text-lg font-bold text-blue-700">${topHour?topHour[0]+':00 น.':'—'}</div><div class="text-sm text-gray-600">ช่วงเวลายอดนิยม</div></div>
             </div>`;
 
-        document.getElementById('yearly-table-title').textContent = `🗓️ ภาพรวมรายปี พ.ศ. ${currentYear + 543} (รวม ${yearlyBookings.length} ครั้ง)`;
+        document.getElementById('yearly-table-title').textContent = `🗓️ ภาพรวมรายปี พ.ศ. ${selectedYear + 543} (รวม ${yearlyBookings.length} ครั้ง)`;
         
         let yearlyCells = thMonths.map((mName, idx) => `
             <tr class="border-b border-gray-100 text-xs">
@@ -908,7 +942,7 @@
                                 </tr>
                             `).join('')}
                             <tr class="bg-gray-50/50 font-bold border-t border-gray-200 text-neutral-900">
-                                <td class="p-3">📊 รวมรายการจองเดือนนี้ทั้งหมด</td>
+                                <td class="p-3">📊 รวมรายการจองเดือนที่เลือกทั้งหมด</td>
                                 <td class="p-3 text-right text-green-700">${monthlyBookings.length} รายการ</td>
                             </tr>
                         </tbody>
@@ -945,7 +979,12 @@
     function init() {
         populateTimes();
         populateFilterRooms();
+        populateStatsYears();
         
+        const now = new Date();
+        const monthSelect = document.getElementById('stats-filter-month');
+        if (monthSelect) monthSelect.value = now.getMonth();
+
         const filterDateInput = document.getElementById('filter-date');
         if (filterDateInput) {
             filterDateInput.value = getDateStr(new Date());
