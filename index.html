@@ -39,7 +39,7 @@
      <button id="tab-stats" class="px-4 py-2 rounded-full text-sm bg-white/80 transition" onclick="showPage('stats')">📊 สถิติ & รายงานวงรอบ</button>
      
      <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="px-3.5 py-2 rounded-full text-xs font-semibold bg-black/25 hover:bg-black/40 text-white border border-white/20 transition ml-2 flex items-center gap-1">
-        🔒 เข้าสู่ระบบแอดมิน
+       🔒 เข้าสู่ระบบแอดมิน
      </button>
     </nav>
    </div>
@@ -296,6 +296,9 @@
                 this.refreshAll();
             }, (error) => {
                 console.error("Firebase Snapshot Error: ", error);
+                alert("⚠️ ไม่สามารถโหลดข้อมูลได้ (กรุณาตรวจสอบสิทธิ์ Firebase Security Rules)");
+                // อัปเดตหน้าจอแม้จะมี error จาก Firebase
+                this.refreshAll();
             });
         },
         save(record, callback) {
@@ -598,7 +601,7 @@
                         💡 <strong>ห้องแนะนำที่ว่างเวลานี้:</strong><br>
                         ${availableAlternativeRooms.map(altRoom => 
                             `<span class="inline-block bg-white border border-blue-300 rounded px-1.5 py-0.5 mt-1 cursor-pointer hover:bg-blue-50 font-medium text-blue-700" onclick="event.stopPropagation(); openBooking('${altRoom}')">👉 ${altRoom} (คลิกจอง)</span>`
-                        .join(' '))}
+                        ).join(' ')}
                     </div>`;
                 } else {
                     suggestionHtml = `<div class="mt-2 pt-2 border-t border-red-200 text-[11px] text-red-700 font-medium">
@@ -765,6 +768,10 @@
                         closeModal();
                         alert(`🎉 บันทึกการจองสำเร็จทั้ง ${targetDates.length} วันเรียบร้อยครับ!\n\n*(อย่าลืมจดจำรหัส PIN ของท่านเพื่อใช้ในกรณีต้องการยกเลิกการจอง)*`);
                     }
+                } else {
+                    // หากเกิดข้อผิดพลาด ให้ปลดล็อคปุ่ม
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "✅ ยืนยันการจอง";
                 }
             });
         });
