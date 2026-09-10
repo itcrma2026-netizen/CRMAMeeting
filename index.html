@@ -127,7 +127,7 @@ const GAS_WEB_APP_URL="https://script.google.com/macros/s/AKfycby_IPXcMgazC_kY51
 const WORK_START="07:00",WORK_END="18:00",MAX_MULTI_DAYS=14;
 const ROOMS=["ห้องประชุม VIP ชั้น 1","ห้องประชุม 1 ชั้น 2","ห้องประชุม 2 ชั้น 2","ห้องประชุม 3 ชั้น 3","ห้องประชุมชั้น 6"];
 const ROOM_FIXED_EQUIPMENT={"ห้องประชุม VIP ชั้น 1":"ทีวี 1 เครื่อง","ห้องประชุม 1 ชั้น 2":"โปรเจกเตอร์ 1 เครื่อง","ห้องประชุม 2 ชั้น 2":"ทีวี 4 จอ, โปรเจกเตอร์ 1 เครื่อง, ปลั๊กพ่วง 1 อัน, ไมค์ติดโต๊ะ","ห้องประชุม 3 ชั้น 3":"โปรเจกเตอร์ 1 เครื่อง, อินเทอร์เน็ต","ห้องประชุมชั้น 6":"สมาร์ททีวี 1 เครื่อง, อินเทอร์เน็ต"};
-const SHARED_INVENTORY=[{id:"wireless_mic",name:"ไมค์ลอย",total:1},{id:"wired_mic",name:"ไมค์สาย",total:2},{id:"laptop",name:"โน้ตบุ๊ก",total:1},{id:"lan_adapter",name:"อุปกรณ์ต่อสายอินเทอร์เน็ตสำหรับโน้ตบุ๊ก",total:1},{id:"printer",name:"เครื่องพิมพ์เอกสาร",total:1},{id:"hdmi_cable",name:"สาย HDMI",total:1}];
+const SHARED_INVENTORY=[{id:"wireless_mic",name:"ไมค์ลอย",total:1},{id:"wired_mic",name:"ไมค์สาย",total:2},{id:"laptop",name:"โน้ตบุ๊ก",total:1},{id:"lan_adapter",name:"อุปกรณ์ต่อสายอินเทอร์เน็ตสำหรับโน้ตบุ๊ก",total:1},{id:"printer",name:"เครื่องฉายเอกสาร",total:1},{id:"hdmi_cable",name:"สาย HDMI",total:1}];
 const ROOM_COLORS={"ห้องประชุม VIP ชั้น 1":{bg:"#FFFF33",text:"#1a1a1a",timeText:"#715a00"},"ห้องประชุม 1 ชั้น 2":{bg:"#FF99CC",text:"#1a1a1a",timeText:"#991f5c"},"ห้องประชุม 2 ชั้น 2":{bg:"#339966",text:"#fff",timeText:"#d1fae5"},"ห้องประชุม 3 ชั้น 3":{bg:"#FFA500",text:"#fff",timeText:"#7c2d12"},"ห้องประชุมชั้น 6":{bg:"#DDA0DD",text:"#1a1a1a",timeText:"#581c58"}};
 
 firebase.initializeApp(FIREBASE_CONFIG);const firestoreDb=firebase.firestore(),auth=firebase.auth();
