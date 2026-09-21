@@ -88,6 +88,37 @@
 <div><label class="text-sm font-medium block">🔐 PIN 4 หลักสำหรับยืนยันการยกเลิก</label><input id="form-pin" type="password" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}" class="w-36 border rounded-lg px-3 py-2 text-sm mt-1 text-center font-bold tracking-widest bg-amber-50 border-amber-300" placeholder="0000"><p class="text-[11px] text-gray-500 mt-1">PIN เก็บแบบแฮช และผู้ใช้อื่นอ่านไม่ได้ การยกเลิกเองทำได้จากเบราว์เซอร์ที่ใช้จองรายการนั้น</p></div>
 <div class="flex gap-2 pt-3"><button id="submit-btn" type="submit" class="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-amber-400">✅ ยืนยันการจอง</button><button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border text-sm">ยกเลิก</button></div></form></div></div>
 
+<!-- Edit meeting time modal -->
+<div id="edit-time-modal" class="fixed inset-0 modal-overlay z-[65] flex items-center justify-center hidden p-3">
+  <div class="bg-white rounded-2xl p-5 md:p-6 w-full max-w-[480px] shadow-2xl">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <h3 class="font-bold text-lg text-blue-800">✏️ แก้ไขเวลาประชุม</h3>
+        <p id="edit-time-detail" class="text-xs text-gray-500 mt-1"></p>
+      </div>
+      <button type="button" onclick="closeEditTimeModal()" class="w-9 h-9 rounded-full hover:bg-gray-100 text-xl">✕</button>
+    </div>
+    <form id="edit-time-form" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="text-sm font-medium">เวลาเริ่ม
+          <select id="edit-start-time" class="mt-1 w-full border rounded-lg px-3 py-2.5 bg-white"></select>
+        </label>
+        <label class="text-sm font-medium">เวลาสิ้นสุด
+          <select id="edit-end-time" class="mt-1 w-full border rounded-lg px-3 py-2.5 bg-white"></select>
+        </label>
+      </div>
+      <p id="edit-time-error" class="hidden text-xs text-red-600 font-medium">⚠️ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น</p>
+      <div class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
+        ระบบจะตรวจสอบห้องและอุปกรณ์ส่วนกลางอีกครั้งก่อนบันทึก เพื่อป้องกันเวลาชนกับรายการอื่น
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button id="edit-time-submit" type="submit" class="flex-1 bg-blue-600 text-white font-semibold py-2.5 rounded-lg text-sm">💾 บันทึกเวลาใหม่</button>
+        <button type="button" onclick="closeEditTimeModal()" class="flex-1 border py-2.5 rounded-lg text-sm">ยกเลิก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Today summary modal -->
 <div id="today-summary-modal" class="fixed inset-0 modal-overlay z-[60] flex items-center justify-center hidden p-2 sm:p-4">
   <div class="bg-white rounded-2xl w-full max-w-[920px] max-h-[94vh] shadow-2xl overflow-hidden flex flex-col">
@@ -131,7 +162,7 @@ const SHARED_INVENTORY=[{id:"wireless_mic",name:"ไมค์ลอย",total:1}
 const ROOM_COLORS={"ห้องประชุม VIP ชั้น 1":{bg:"#FFFF33",text:"#1a1a1a",timeText:"#715a00"},"ห้องประชุม 1 ชั้น 2":{bg:"#FF99CC",text:"#1a1a1a",timeText:"#991f5c"},"ห้องประชุม 2 ชั้น 2":{bg:"#339966",text:"#fff",timeText:"#d1fae5"},"ห้องประชุม 3 ชั้น 3":{bg:"#FFA500",text:"#fff",timeText:"#7c2d12"},"ห้องประชุมชั้น 6":{bg:"#DDA0DD",text:"#1a1a1a",timeText:"#581c58"}};
 
 firebase.initializeApp(FIREBASE_CONFIG);const firestoreDb=firebase.firestore(),auth=firebase.auth();
-let allBookings=[],selectedDate=new Date(),calMonth=new Date(selectedDate.getFullYear(),selectedDate.getMonth(),1),selectedRoom=null,currentUser=null,isAdmin=false,roomChartInstance=null,adminPrivateMap={},unsubscribePrivate=null,firstBookingSnapshotLoaded=false;
+let allBookings=[],selectedDate=new Date(),calMonth=new Date(selectedDate.getFullYear(),selectedDate.getMonth(),1),selectedRoom=null,currentUser=null,isAdmin=false,roomChartInstance=null,adminPrivateMap={},unsubscribePrivate=null,firstBookingSnapshotLoaded=false,editTimeTargetIds=[];
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function getDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
@@ -163,9 +194,10 @@ function subscribeBookings(){return firestoreDb.collection("bookings_v2").onSnap
 function subscribeAdminPrivate(){if(unsubscribePrivate)unsubscribePrivate();unsubscribePrivate=firestoreDb.collection("bookingPrivate_v2").onSnapshot(snapshot=>{adminPrivateMap={};snapshot.forEach(doc=>adminPrivateMap[doc.id]=doc.data());renderMyBookings();renderAdminNotifications();renderImagePreview()},err=>console.error("Private subscription error",err))}
 
 function populateTimes(){const s=document.getElementById("start-time"),e=document.getElementById("end-time");s.innerHTML="";e.innerHTML="";for(let m=timeToMinutes(WORK_START);m<=timeToMinutes(WORK_END);m+=30){const t=minutesToTime(m);s.insertAdjacentHTML("beforeend",`<option value="${t}">${t}</option>`);e.insertAdjacentHTML("beforeend",`<option value="${t}">${t}</option>`)}s.value="09:00";e.value="10:00";s.onchange=e.onchange=handleTimeChange}
+function populateEditTimes(){const s=document.getElementById("edit-start-time"),e=document.getElementById("edit-end-time");s.innerHTML="";e.innerHTML="";for(let m=timeToMinutes(WORK_START);m<=timeToMinutes(WORK_END);m+=30){const t=minutesToTime(m);s.insertAdjacentHTML("beforeend",`<option value="${t}">${t}</option>`);e.insertAdjacentHTML("beforeend",`<option value="${t}">${t}</option>`)}const validate=()=>document.getElementById("edit-time-error").classList.toggle("hidden",s.value<e.value);s.onchange=e.onchange=validate}
 function populateFilterRooms(){document.getElementById("filter-room").innerHTML='<option value="">ทุกห้อง</option>'+ROOMS.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("")}
 function initStatsDates(){const n=new Date();document.getElementById("stats-start-date").value=getDateStr(new Date(n.getFullYear(),n.getMonth(),1));document.getElementById("stats-end-date").value=getDateStr(new Date(n.getFullYear(),n.getMonth()+1,0))}
-async function init(){populateTimes();populateFilterRooms();initStatsDates();const t=getDateStr(new Date());document.getElementById("filter-date").value=t;document.getElementById("image-date").value=t;try{await ensureAnonymousAuth();subscribeBookings()}catch(err){console.error(err);alert("⚠️ ไม่สามารถเชื่อมต่อ Firebase Authentication ได้")}if(typeof lucide!=="undefined")lucide.createIcons()}
+async function init(){populateTimes();populateEditTimes();populateFilterRooms();initStatsDates();const t=getDateStr(new Date());document.getElementById("filter-date").value=t;document.getElementById("image-date").value=t;try{await ensureAnonymousAuth();subscribeBookings()}catch(err){console.error(err);alert("⚠️ ไม่สามารถเชื่อมต่อ Firebase Authentication ได้")}if(typeof lucide!=="undefined")lucide.createIcons()}
 window.addEventListener("load",init);
 
 function showPage(page){if(page==="admin"&&!isAdmin){openAdminLogin();return}["home","mybookings","stats","admin"].forEach(p=>{const sec=document.getElementById("page-"+p),tab=document.getElementById("tab-"+p);if(sec)sec.classList.toggle("hidden",p!==page);if(tab){tab.classList.toggle("tab-active",p===page);if(p!=="admin")tab.classList.toggle("bg-white/90",p!==page)}});if(page==="mybookings")renderMyBookings();if(page==="stats")renderStats();if(page==="admin"){renderAdminNotifications();renderImagePreview()}}
@@ -233,12 +265,158 @@ async function createBookingAtomic({room,dates,startTime,endTime,purpose,bookerN
 document.getElementById("booking-form").addEventListener("submit",async e=>{e.preventDefault();if(!currentUser)return alert("ระบบกำลังเชื่อมต่อ กรุณาลองอีกครั้ง");const st=document.getElementById("start-time").value,et=document.getElementById("end-time").value;if(st>=et)return alert("❌ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น");const dates=getTargetDatesFromForm();if(!dates.length)return alert("❌ กรุณาตรวจสอบวันที่สิ้นสุด");if(dates.length>MAX_MULTI_DAYS)return alert(`⚠️ จองต่อเนื่องได้ไม่เกิน ${MAX_MULTI_DAYS} วัน`);if(dates.some(ds=>ds<getDateStr(new Date())))return alert("❌ ไม่สามารถจองย้อนหลังได้");const bookerName=document.getElementById("form-name").value.trim(),phone=document.getElementById("form-phone").value.trim(),purpose=document.getElementById("form-purpose").value.trim(),pin=document.getElementById("form-pin").value.trim(),borrowedQuantities=getSelectedInventoryQuantities();if(!/^\d{4}$/.test(pin))return alert("❌ PIN ต้องเป็นตัวเลข 4 หลัก");const btn=document.getElementById("submit-btn");btn.disabled=true;btn.textContent="กำลังตรวจสอบและบันทึก...";try{const result=await createBookingAtomic({room:selectedRoom,dates,startTime:st,endTime:et,purpose,bookerName,phone,pin,borrowedQuantities,ownerUid:currentUser.uid});notifyAdminEmail({event_type:"booking_created",event_id:`create_${result.groupId}`,room:selectedRoom,dates,start_time:st,end_time:et,booker_name:bookerName,phone,purpose,equipment:borrowedText(borrowedQuantities),group_id:result.groupId,booked_at_iso:timestampIso(result.createdAt)});closeModal();alert(`🎉 บันทึกการจองสำเร็จ ${dates.length} วัน\nระบบส่งคำขอแจ้งเตือนอีเมลให้ผู้ดูแลแล้ว`)}catch(error){console.error(error);const msg=String(error.message||error);if(msg.includes("ROOM_CONFLICT|"))alert(`❌ ห้องถูกจองไปก่อนแล้วในวันที่ ${msg.split("|")[1]}\nกรุณาเลือกเวลา/ห้องใหม่`);else if(msg.includes("INVENTORY_CONFLICT|")){const p=msg.split("|");alert(`❌ อุปกรณ์ \"${p[2]}\" ไม่เพียงพอในวันที่ ${p[1]}`)}else alert("❌ บันทึกไม่สำเร็จ: "+msg)}finally{btn.disabled=false;btn.textContent="✅ ยืนยันการจอง"}});
 
 function clearFilters(){document.getElementById("filter-room").value="";document.getElementById("filter-date").value="";renderMyBookings()}
-function renderMyBookings(){const list=document.getElementById("mybookings-list"),empty=document.getElementById("mybookings-empty");if(!list||!empty)return;const roomF=document.getElementById("filter-room").value,dateF=document.getElementById("filter-date").value;let f=allBookings.filter(b=>b.status==="active");if(roomF)f=f.filter(b=>b.room_name===roomF);if(dateF)f=f.filter(b=>b.date===dateF);f.sort(sortBookings);if(!f.length){list.innerHTML="";empty.classList.remove("hidden");return}empty.classList.add("hidden");list.innerHTML=f.map(b=>{const p=isAdmin?adminPrivateMap[b.__backendId]:null,owner=bookingOwner(b),contact=isAdmin&&p?`<strong>${esc(p.booker_name)}</strong> (📞 ${esc(p.phone)})`:owner?'<span class="font-medium text-blue-700">รายการของคุณ</span>':'<span class="text-gray-500">ผู้จอง: ข้อมูลส่วนตัวถูกซ่อน</span>',cancel=isAdmin?`<button onclick="cancelBooking('${b.__backendId}')" class="bg-amber-400 text-xs px-3 py-2 rounded-lg font-semibold">👑 ยกเลิก</button>`:owner?`<button onclick="cancelBooking('${b.__backendId}')" class="bg-red-100 text-red-700 text-xs px-3 py-2 rounded-lg font-semibold">❌ ยกเลิกของฉัน</button>`:"";return `<div class="border rounded-xl p-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50"><div class="text-sm"><div>${contact}</div><div class="mt-1"><span class="text-green-700 font-medium">${esc(b.room_name)}</span></div><div class="text-gray-500">📅 ${esc(b.date)} | 🕐 ${esc(b.start_time)}–${esc(b.end_time)}</div><div class="text-xs text-gray-500">วัตถุประสงค์: ${esc(b.purpose)}</div>${b.equipment?`<div class="text-xs text-indigo-600">📦 ${esc(b.equipment)}</div>`:""}${(isAdmin||owner)?`<div class="text-[11px] text-slate-500 mt-1">🕘 จองเมื่อ: ${esc(formatBookingCreatedAt(b.created_at,b.legacy_import))}</div>`:""}${b.group_size>1?`<div class="text-[11px] text-blue-700">จองต่อเนื่อง ${b.group_size} วัน</div>`:""}</div><div>${cancel}</div></div>`}).join("")}
+function renderMyBookings(){
+  const list=document.getElementById("mybookings-list"),empty=document.getElementById("mybookings-empty");
+  if(!list||!empty)return;
+  const roomF=document.getElementById("filter-room").value,dateF=document.getElementById("filter-date").value;
+  let f=allBookings.filter(b=>b.status==="active");
+  if(roomF)f=f.filter(b=>b.room_name===roomF);
+  if(dateF)f=f.filter(b=>b.date===dateF);
+  f.sort(sortBookings);
+  if(!f.length){list.innerHTML="";empty.classList.remove("hidden");return}
+  empty.classList.add("hidden");
+  list.innerHTML=f.map(b=>{
+    const p=isAdmin?adminPrivateMap[b.__backendId]:null,owner=bookingOwner(b);
+    const contact=isAdmin&&p?`<strong>${esc(p.booker_name)}</strong> (📞 ${esc(p.phone)})`:owner?'<span class="font-medium text-blue-700">รายการของคุณ</span>':'<span class="text-gray-500">ผู้จอง: ข้อมูลส่วนตัวถูกซ่อน</span>';
+    const canManage=isAdmin||owner;
+    const edit=canManage?`<button onclick="openEditTime('${b.__backendId}')" class="bg-blue-100 text-blue-800 text-xs px-3 py-2 rounded-lg font-semibold">✏️ แก้ไขเวลา</button>`:"";
+    const cancel=isAdmin?`<button onclick="cancelBooking('${b.__backendId}')" class="bg-amber-400 text-xs px-3 py-2 rounded-lg font-semibold">👑 ยกเลิก</button>`:owner?`<button onclick="cancelBooking('${b.__backendId}')" class="bg-red-100 text-red-700 text-xs px-3 py-2 rounded-lg font-semibold">❌ ยกเลิกของฉัน</button>`:"";
+    return `<div class="border rounded-xl p-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50"><div class="text-sm"><div>${contact}</div><div class="mt-1"><span class="text-green-700 font-medium">${esc(b.room_name)}</span></div><div class="text-gray-500">📅 ${esc(b.date)} | 🕐 ${esc(b.start_time)}–${esc(b.end_time)}</div><div class="text-xs text-gray-500">วัตถุประสงค์: ${esc(b.purpose)}</div>${b.equipment?`<div class="text-xs text-indigo-600">📦 ${esc(b.equipment)}</div>`:""}${(isAdmin||owner)?`<div class="text-[11px] text-slate-500 mt-1">🕘 จองเมื่อ: ${esc(formatBookingCreatedAt(b.created_at,b.legacy_import))}</div>`:""}${b.group_size>1?`<div class="text-[11px] text-blue-700">จองต่อเนื่อง ${b.group_size} วัน</div>`:""}</div><div class="flex flex-wrap gap-2">${edit}${cancel}</div></div>`
+  }).join("")
+}
 async function getPrivateBooking(id){if(isAdmin&&adminPrivateMap[id])return adminPrivateMap[id];const s=await firestoreDb.collection("bookingPrivate_v2").doc(id).get();return s.exists?s.data():null}
+
+function closeEditTimeModal(){editTimeTargetIds=[];document.getElementById("edit-time-modal").classList.add("hidden")}
+
+async function openEditTime(id){
+  const rec=allBookings.find(b=>b.__backendId===id);
+  if(!rec||rec.status!=="active")return alert("ไม่พบรายการจองที่ต้องการแก้ไข");
+  if(!isAdmin&&!bookingOwner(rec))return alert("รายการนี้ไม่ได้ถูกสร้างจากเบราว์เซอร์ของคุณ กรุณาติดต่อผู้ดูแลระบบ");
+
+  if(!isAdmin){
+    let privateData=null;
+    try{privateData=await getPrivateBooking(id)}catch(_){return alert("ไม่สามารถตรวจสอบสิทธิ์การแก้ไขได้")}
+    const pin=prompt("🔐 กรุณากรอก PIN 4 หลักที่ใช้ตอนจอง เพื่อแก้ไขเวลา:");
+    if(pin===null)return;
+    const hashed=await hashPin(pin.trim(),rec.group_id);
+    if(!privateData||hashed!==privateData.pin_hash)return alert("❌ PIN ไม่ถูกต้อง");
+  }
+
+  let targets=[rec];
+  if(rec.group_size>1){
+    const group=allBookings.filter(b=>b.status==="active"&&b.group_id===rec.group_id);
+    const choice=prompt(`รายการนี้เป็นการจองต่อเนื่อง ${rec.group_size} วัน\nพิมพ์ 1 = แก้เฉพาะวันที่ ${rec.date}\nพิมพ์ 2 = แก้เวลาทั้งชุด`);
+    if(choice===null)return;
+    if(choice.trim()==="2")targets=group;
+    else if(choice.trim()!=="1")return alert("กรุณาพิมพ์ 1 หรือ 2");
+  }
+
+  editTimeTargetIds=targets.map(b=>b.__backendId);
+  document.getElementById("edit-start-time").value=rec.start_time;
+  document.getElementById("edit-end-time").value=rec.end_time;
+  document.getElementById("edit-time-error").classList.add("hidden");
+  const dates=targets.map(b=>b.date).sort();
+  const dateText=targets.length===1?thaiDate(dates[0]):`${thaiDate(dates[0])} ถึง ${thaiDate(dates[dates.length-1])} (${targets.length} วัน)`;
+  document.getElementById("edit-time-detail").textContent=`${rec.room_name} • ${dateText} • เวลาเดิม ${rec.start_time}–${rec.end_time}`;
+  document.getElementById("edit-time-modal").classList.remove("hidden");
+}
+
+async function updateBookingTimesAtomic(targets,newStart,newEnd,byAdmin){
+  const ids=new Set(targets.map(b=>b.__backendId));
+  const roomMap=new Map();
+  const invMap=new Map();
+
+  targets.forEach(b=>{
+    const roomId=b.room_lock_id||roomLockId(b.date,b.room_name);
+    if(!roomMap.has(roomId))roomMap.set(roomId,{id:roomId,date:b.date,room:b.room_name,targets:[]});
+    roomMap.get(roomId).targets.push(b);
+
+    Object.entries(b.borrowed_quantities||{}).forEach(([itemId,qtyRaw])=>{
+      const qty=Number(qtyRaw||0);
+      if(qty<=0)return;
+      const invId=inventoryLockId(b.date,itemId);
+      if(!invMap.has(invId))invMap.set(invId,{id:invId,date:b.date,itemId,targets:[]});
+      invMap.get(invId).targets.push({booking:b,qty});
+    });
+  });
+
+  const roomEntries=[...roomMap.values()].map(x=>({...x,ref:firestoreDb.collection("roomLocks_v2").doc(x.id)}));
+  const invEntries=[...invMap.values()].map(x=>({...x,ref:firestoreDb.collection("inventoryLocks_v2").doc(x.id)}));
+
+  await firestoreDb.runTransaction(async tx=>{
+    const roomSnaps=await Promise.all(roomEntries.map(x=>tx.get(x.ref)));
+    const invSnaps=await Promise.all(invEntries.map(x=>tx.get(x.ref)));
+
+    roomEntries.forEach((entry,i)=>{
+      const current=roomSnaps[i].exists?(roomSnaps[i].data().reservations||[]):[];
+      const other=current.filter(r=>!ids.has(r.booking_id));
+      if(other.some(r=>isOverlap(newStart,newEnd,r.start_time,r.end_time)))throw new Error(`ROOM_CONFLICT|${entry.date}`);
+    });
+
+    invEntries.forEach((entry,i)=>{
+      const item=SHARED_INVENTORY.find(x=>x.id===entry.itemId);
+      if(!item)throw new Error(`INVENTORY_CONFLICT|${entry.date}|${entry.itemId}`);
+      const current=invSnaps[i].exists?(invSnaps[i].data().reservations||[]):[];
+      const other=current.filter(r=>!ids.has(r.booking_id));
+      const used=other.filter(r=>isOverlap(newStart,newEnd,r.start_time,r.end_time)).reduce((sum,r)=>sum+Number(r.qty||0),0);
+      const needed=entry.targets.reduce((sum,x)=>sum+x.qty,0);
+      if(used+needed>item.total)throw new Error(`INVENTORY_CONFLICT|${entry.date}|${item.name}`);
+    });
+
+    roomEntries.forEach((entry,i)=>{
+      const current=roomSnaps[i].exists?(roomSnaps[i].data().reservations||[]):[];
+      const other=current.filter(r=>!ids.has(r.booking_id));
+      const own=entry.targets.map(b=>({booking_id:b.__backendId,group_id:b.group_id,owner_uid:b.owner_uid,start_time:newStart,end_time:newEnd}));
+      tx.set(entry.ref,{room_name:entry.room,date:entry.date,reservations:[...other,...own],updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    });
+
+    invEntries.forEach((entry,i)=>{
+      const current=invSnaps[i].exists?(invSnaps[i].data().reservations||[]):[];
+      const other=current.filter(r=>!ids.has(r.booking_id));
+      const own=entry.targets.map(x=>({booking_id:x.booking.__backendId,group_id:x.booking.group_id,owner_uid:x.booking.owner_uid,start_time:newStart,end_time:newEnd,qty:x.qty}));
+      tx.set(entry.ref,{item_id:entry.itemId,date:entry.date,reservations:[...other,...own],updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    });
+
+    targets.forEach(b=>tx.update(firestoreDb.collection("bookings_v2").doc(b.__backendId),{
+      start_time:newStart,
+      end_time:newEnd,
+      edited_at:firebase.firestore.FieldValue.serverTimestamp(),
+      last_event:"edited",
+      admin_seen:byAdmin?true:false
+    }));
+  });
+}
+
+document.getElementById("edit-time-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const st=document.getElementById("edit-start-time").value,et=document.getElementById("edit-end-time").value;
+  if(st>=et){document.getElementById("edit-time-error").classList.remove("hidden");return}
+  const targets=editTimeTargetIds.map(id=>allBookings.find(b=>b.__backendId===id)).filter(b=>b&&b.status==="active");
+  if(!targets.length)return alert("ไม่พบรายการจองที่ต้องการแก้ไข กรุณาเปิดรายการใหม่อีกครั้ง");
+  if(!isAdmin&&targets.some(b=>!bookingOwner(b)))return alert("ไม่มีสิทธิ์แก้ไขรายการนี้");
+  if(targets.every(b=>b.start_time===st&&b.end_time===et)){closeEditTimeModal();return}
+
+  const btn=document.getElementById("edit-time-submit");
+  btn.disabled=true;btn.textContent="กำลังตรวจสอบ...";
+  try{
+    await updateBookingTimesAtomic(targets,st,et,isAdmin);
+    closeEditTimeModal();
+    alert(`✅ แก้ไขเวลาประชุมเรียบร้อยแล้ว\nเวลาใหม่ ${st}–${et} น.${targets.length>1?`\nอัปเดตทั้งหมด ${targets.length} วัน`:""}`);
+  }catch(error){
+    console.error(error);
+    const msg=String(error.message||error);
+    if(msg.includes("ROOM_CONFLICT|"))alert(`❌ เวลานี้ชนกับการจองอื่นในวันที่ ${msg.split("|")[1]}\nกรุณาเลือกเวลาใหม่`);
+    else if(msg.includes("INVENTORY_CONFLICT|")){const p=msg.split("|");alert(`❌ อุปกรณ์ "${p[2]}" ไม่เพียงพอในวันที่ ${p[1]} สำหรับเวลาใหม่`)}
+    else alert("❌ แก้ไขเวลาไม่สำเร็จ: "+msg);
+  }finally{
+    btn.disabled=false;btn.textContent="💾 บันทึกเวลาใหม่";
+  }
+});
+
 async function cancelBooking(id){const rec=allBookings.find(b=>b.__backendId===id);if(!rec||rec.status!=="active")return;if(!isAdmin&&!bookingOwner(rec))return alert("รายการนี้ไม่ได้ถูกสร้างจากเบราว์เซอร์ของคุณ กรุณาติดต่อผู้ดูแลระบบ");let privateData=null;if(!isAdmin){try{privateData=await getPrivateBooking(id)}catch(_){return alert("ไม่สามารถตรวจสอบสิทธิ์การยกเลิกได้")}const pin=prompt("🔐 กรุณากรอก PIN 4 หลักที่ใช้ตอนจอง:");if(pin===null)return;const hashed=await hashPin(pin.trim(),rec.group_id);if(!privateData||hashed!==privateData.pin_hash)return alert("❌ PIN ไม่ถูกต้อง")}else privateData=adminPrivateMap[id]||null;let targets=[rec];if(rec.group_size>1){const group=allBookings.filter(b=>b.status==="active"&&b.group_id===rec.group_id),choice=prompt(`รายการนี้เป็นการจองต่อเนื่อง ${rec.group_size} วัน\nพิมพ์ 1 = ยกเลิกเฉพาะวันที่ ${rec.date}\nพิมพ์ 2 = ยกเลิกทั้งชุด`);if(choice===null)return;if(choice.trim()==="2")targets=group;else if(choice.trim()!=="1")return alert("กรุณาพิมพ์ 1 หรือ 2")}if(!confirm(`ยืนยันยกเลิก ${targets.length} รายการใช่หรือไม่?`))return;try{await cancelBookingsAtomic(targets,isAdmin);const dates=targets.map(b=>b.date).sort();notifyAdminEmail({event_type:"booking_cancelled",event_id:`cancel_${rec.group_id}_${Date.now()}`,room:rec.room_name,dates,start_time:rec.start_time,end_time:rec.end_time,booker_name:privateData?.booker_name||"ผู้จอง",phone:privateData?.phone||"",purpose:rec.purpose,equipment:rec.equipment||"",cancelled_by:isAdmin?"ผู้ดูแลระบบ":"ผู้จอง",booked_at_iso:rec.legacy_import?"":timestampIso(rec.created_at)});alert("✅ ยกเลิกการจองเรียบร้อยแล้ว")}catch(err){console.error(err);alert("❌ ยกเลิกไม่สำเร็จ: "+(err.message||err))}}
 async function cancelBookingsAtomic(targets,byAdmin){const ids=new Set(targets.map(b=>b.__backendId)),roomIds=[...new Set(targets.map(b=>b.room_lock_id).filter(Boolean))],invIds=[...new Set(targets.flatMap(b=>b.inventory_lock_ids||[]))];await firestoreDb.runTransaction(async tx=>{const roomRefs=roomIds.map(id=>firestoreDb.collection("roomLocks_v2").doc(id)),invRefs=invIds.map(id=>firestoreDb.collection("inventoryLocks_v2").doc(id)),roomSnaps=await Promise.all(roomRefs.map(r=>tx.get(r))),invSnaps=await Promise.all(invRefs.map(r=>tx.get(r)));roomSnaps.forEach((s,i)=>{if(!s.exists)return;const d=s.data(),reservations=(d.reservations||[]).filter(r=>!ids.has(r.booking_id));tx.set(roomRefs[i],{...d,reservations,updated_at:firebase.firestore.FieldValue.serverTimestamp()})});invSnaps.forEach((s,i)=>{if(!s.exists)return;const d=s.data(),reservations=(d.reservations||[]).filter(r=>!ids.has(r.booking_id));tx.set(invRefs[i],{...d,reservations,updated_at:firebase.firestore.FieldValue.serverTimestamp()})});targets.forEach(b=>tx.update(firestoreDb.collection("bookings_v2").doc(b.__backendId),{status:"cancelled",cancelled_at:firebase.firestore.FieldValue.serverTimestamp(),admin_seen:byAdmin?true:false}))})}
 
-function renderAdminNotifications(){if(!isAdmin)return;const list=document.getElementById("admin-notification-list"),empty=document.getElementById("admin-notification-empty"),badge=document.getElementById("admin-unread-badge"),unread=allBookings.filter(b=>b.admin_seen!==true).sort((a,b)=>timestampMs(b.created_at)-timestampMs(a.created_at)||sortBookings(b,a));badge.textContent=unread.length;badge.classList.toggle("hidden",!unread.length);if(!unread.length){list.innerHTML="";empty.classList.remove("hidden");return}empty.classList.add("hidden");list.innerHTML=unread.map(b=>{const p=adminPrivateMap[b.__backendId]||{};return `<div class="border ${b.status==="cancelled"?"border-red-200 bg-red-50":"border-amber-200 bg-amber-50"} rounded-xl p-3 flex flex-col md:flex-row md:justify-between gap-3"><div class="text-sm"><div class="font-bold">${b.status==="cancelled"?"❌ มีการยกเลิก":"🆕 มีการจองใหม่"}</div><div>${esc(b.room_name)} | ${esc(b.date)} | ${esc(b.start_time)}–${esc(b.end_time)}</div><div class="text-xs mt-1">👤 ${esc(p.booker_name||"กำลังโหลด...")} ${p.phone?`| 📞 ${esc(p.phone)}`:""}</div><div class="text-xs text-gray-600">📝 ${esc(b.purpose)}</div><div class="text-[11px] text-slate-500 mt-1">🕘 จองเมื่อ: ${esc(formatBookingCreatedAt(b.created_at,b.legacy_import))}</div></div><button onclick="markAdminSeen('${b.__backendId}')" class="self-start bg-white border px-3 py-2 rounded-lg text-xs font-semibold">✓ รับทราบ</button></div>`}).join("")}
+function renderAdminNotifications(){if(!isAdmin)return;const list=document.getElementById("admin-notification-list"),empty=document.getElementById("admin-notification-empty"),badge=document.getElementById("admin-unread-badge"),unread=allBookings.filter(b=>b.admin_seen!==true).sort((a,b)=>timestampMs(b.created_at)-timestampMs(a.created_at)||sortBookings(b,a));badge.textContent=unread.length;badge.classList.toggle("hidden",!unread.length);if(!unread.length){list.innerHTML="";empty.classList.remove("hidden");return}empty.classList.add("hidden");list.innerHTML=unread.map(b=>{const p=adminPrivateMap[b.__backendId]||{};return `<div class="border ${b.status==="cancelled"?"border-red-200 bg-red-50":b.last_event==="edited"?"border-blue-200 bg-blue-50":"border-amber-200 bg-amber-50"} rounded-xl p-3 flex flex-col md:flex-row md:justify-between gap-3"><div class="text-sm"><div class="font-bold">${b.status==="cancelled"?"❌ มีการยกเลิก":b.last_event==="edited"?"✏️ มีการแก้ไขเวลา":"🆕 มีการจองใหม่"}</div><div>${esc(b.room_name)} | ${esc(b.date)} | ${esc(b.start_time)}–${esc(b.end_time)}</div><div class="text-xs mt-1">👤 ${esc(p.booker_name||"กำลังโหลด...")} ${p.phone?`| 📞 ${esc(p.phone)}`:""}</div><div class="text-xs text-gray-600">📝 ${esc(b.purpose)}</div><div class="text-[11px] text-slate-500 mt-1">🕘 จองเมื่อ: ${esc(formatBookingCreatedAt(b.created_at,b.legacy_import))}</div></div><button onclick="markAdminSeen('${b.__backendId}')" class="self-start bg-white border px-3 py-2 rounded-lg text-xs font-semibold">✓ รับทราบ</button></div>`}).join("")}
 async function markAdminSeen(id){if(isAdmin)await firestoreDb.collection("bookings_v2").doc(id).update({admin_seen:true})}
 async function markAllAdminSeen(){if(!isAdmin)return;const unread=allBookings.filter(b=>b.admin_seen!==true);if(!unread.length)return;const batch=firestoreDb.batch();unread.forEach(b=>batch.update(firestoreDb.collection("bookings_v2").doc(b.__backendId),{admin_seen:true}));await batch.commit()}
 
